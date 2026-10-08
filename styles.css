@@ -137,3 +137,14 @@ html.tp-open,html.tp-open body{overflow:hidden}
 @media (min-width:700px){.tp-sheet{bottom:auto;top:8vh;border-radius:20px;border-bottom:1px solid var(--line);height:min(76vh,680px)}}
 @media (prefers-reduced-motion:reduce){.tp-sheet,.tp-scrim{transition:none}}
 .logo{background:none;border:0;overflow:hidden}.logo img{display:block;width:34px;height:34px}
+/* header + footer flow matched to Chip Thinning (mf2) */
+header{align-items:center}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}
+.brand-mark{width:14px;height:42px;border-radius:4px;background:linear-gradient(180deg,var(--teal),var(--cu));flex:none;box-shadow:0 0 14px rgba(45,212,191,.25)}
+.brand-kicker{font:700 11.5px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--teal)}
+header h1{margin-top:2px;font-size:clamp(20px,5.4vw,26px);font-weight:800;letter-spacing:-.02em;line-height:1.15}
+header h1 span{color:var(--cu2)}
+.units{align-self:flex-start;margin-top:4px}
+.site-footer{font-size:12.5px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.5}
+.site-footer p{margin:4px 0}
+.site-footer .fine{opacity:.75;font-size:11.5px}
