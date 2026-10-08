@@ -381,7 +381,7 @@
     const spHi = S.units === "mm" ? Math.round(ts.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ts.sfmHi) + " SFM";
     const lines = [
       "Speed " + sp + (ts.override ? " (yours)" : " — low end of published range (up to " + spHi + ")") + ". Starting point only.",
-      "Fill in Z (depth) and R (retract plane). Feed must equal RPM × pitch exactly.",
+      "Fill in X Y (hole position), Z (depth) and R (retract plane). Feed must equal RPM × pitch exactly.",
     ];
     if (!fb.exact) lines.push({ c: "warn", t: "Feed rounded for the F word. For exact sync use G95 (feed/rev) with F = pitch, or pick an RPM that gives an even feed." });
     if (t.pipe && t.type === "taper") lines.push("Pipe tap: go to depth set by the L1 plug gauge, not a fixed thread length.");

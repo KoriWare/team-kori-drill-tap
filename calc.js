@@ -343,7 +343,7 @@
     const feed = rigidFeed(rpm, t, units);
     const f = fWord(feed, units);
     return {
-      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 Z___ R___ F" + f.text, "G80"],
+      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 X___ Y___ Z___ R___ F" + f.text, "G80"],
       feed, exact: f.exact,
     };
   }

@@ -73,8 +73,8 @@ t("drill size spot checks", () => {
 
 // --- rigid tap
 t("1/4-20 at 800 rpm -> F40. ; M6x1 at 800 -> F800.", () => {
-  const a = C.fanucBlock(800, th("UNC-1/4-20"), "in"); assert.equal(a.lines[2], "G84 Z___ R___ F40."); assert(a.exact);
-  const b = C.fanucBlock(800, th("M6x1"), "mm"); assert.equal(b.lines[2], "G84 Z___ R___ F800.");
+  const a = C.fanucBlock(800, th("UNC-1/4-20"), "in"); assert.equal(a.lines[2], "G84 X___ Y___ Z___ R___ F40."); assert(a.exact);
+  const b = C.fanucBlock(800, th("M6x1"), "mm"); assert.equal(b.lines[2], "G84 X___ Y___ Z___ R___ F800.");
 });
 t("NPT 1/2-14 rigid feed = rpm / 14", () => { near(C.rigidFeed(280, th("NPT-1/2"), "in"), 20, 1e-9, "feed"); });
 
