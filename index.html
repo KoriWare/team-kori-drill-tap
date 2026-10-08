@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=r1s" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=r1s" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=r1s" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=r1s" />
-  <link rel="stylesheet" href="styles.css?v=r1s" />
+  <link rel="manifest" href="manifest.webmanifest?v=q1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=q1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=q1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=q1" />
+  <link rel="stylesheet" href="styles.css?v=q1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -49,7 +49,7 @@
         <p><b>4. Speeds &amp; feeds.</b> Set the work material and its hardness once (HB or HRC). Leave hardness blank and the app uses a typical value for that material. If the material is too soft for the HRC scale, switch to HB.</p>
         <p><b>5. Make the numbers yours.</b> Tap SFM and the drill's Speed, Spindle and Feed/rev boxes show the calculated values. Type over any of them (a dashed underline means you can edit it). Drill speed and spindle are linked through the drill Ø, so changing one updates the other. Tap <b>use calculated</b> to go back. Going above the published range shows a heads-up in the notes.</p>
         <p><b>6. Hole depth.</b> Pick Blind or Through, type the full thread depth (or part thickness), the tap chamfer and the drill point (118° or 135°). The app works out <b>Tap to Z</b> (thread + chamfer threads) and <b>Drill to Z</b> (one pitch of clearance plus the point on blind holes, or a small breakout plus the point on through holes) and fills them into both code boxes.</p>
-        <p><b>7. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Z comes from Hole depth (Z0 = top of the part); fill in X Y (hole position) and R (retract plane). <b>Copy</b> above each box copies the whole block.</p>
+        <p><b>7. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Z comes from Hole depth (Z0 = top of the part). Each amber <b>?</b> is yours to fill in: X Y (hole position) and R (retract plane), plus Z if no depth is set. Never run a block that still has a ? in it. <b>Copy</b> above each box copies the whole block.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
         <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Method: cost per hole = (tap price + change time) ÷ holes per tap, plus breakage. Dollar defaults are samples, not published data. Type your own to estimate. They stay on your device and aren't in the share link.</p>
@@ -271,8 +271,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=r1s"></script>
-<script src="calc.js?v=r1s"></script>
-<script src="app.js?v=r1s"></script>
+<script src="data.js?v=q1"></script>
+<script src="calc.js?v=q1"></script>
+<script src="app.js?v=q1"></script>
 </body>
 </html>

@@ -73,8 +73,8 @@ t("drill size spot checks", () => {
 
 // --- rigid tap
 t("1/4-20 at 800 rpm -> F40. ; M6x1 at 800 -> F800.", () => {
-  const a = C.fanucBlock(800, th("UNC-1/4-20"), "in"); assert.equal(a.lines[2], "G84 X___ Y___ Z___ R___ F40."); assert(a.exact);
-  const b = C.fanucBlock(800, th("M6x1"), "mm"); assert.equal(b.lines[2], "G84 X___ Y___ Z___ R___ F800.");
+  const a = C.fanucBlock(800, th("UNC-1/4-20"), "in"); assert.equal(a.lines[2], "G84 X? Y? Z? R? F40."); assert(a.exact);
+  const b = C.fanucBlock(800, th("M6x1"), "mm"); assert.equal(b.lines[2], "G84 X? Y? Z? R? F800.");
 });
 t("NPT 1/2-14 rigid feed = rpm / 14", () => { near(C.rigidFeed(280, th("NPT-1/2"), "in"), 20, 1e-9, "feed"); });
 
@@ -97,7 +97,7 @@ t("drill + tap starts return numbers; HSS blocked over 35 HRC", () => {
   assert(C.tapStart("ci_gray", "form", "hss", 200, th("UNC-1/4-20")).blocked);
 });
 t("drill block: G81 shallow, G73 3-5xD HSS with Q, G83 deep, indexable never pecks", () => {
-  const a = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in"); assert.equal(a.cycle, "G81"); assert(/^G81 X___ Y___ Z___ R___ F\d+\.\d$/.test(a.lines[2]), a.lines[2]);
+  const a = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in"); assert.equal(a.cycle, "G81"); assert(/^G81 X\? Y\? Z\? R\? F\d+\.\d$/.test(a.lines[2]), a.lines[2]);
   const b = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.8), "in"); assert.equal(b.cycle, "G73"); assert(/ Q0\.2010 F/.test(b.lines[2]), b.lines[2]);
   const c = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 1.4), "in"); assert.equal(c.cycle, "G83"); assert(/ Q0\.1005 F/.test(c.lines[2]), c.lines[2]);
   const d = C.drillBlock(C.drillStart("low_c", "indexable", 126, 0.75, 3), "in"); assert.equal(d.cycle, "G81"); assert(!/Q/.test(d.lines[2]));
@@ -143,7 +143,7 @@ t("drill point + hole depth chain + Z words in both blocks", () => {
   assert.equal(C.zWord(0.7, "in"), "Z-0.7000"); assert.equal(C.zWord(0.81039, "in"), "Z-0.8104"); assert.equal(C.zWord(0.5, "mm"), "Z-12.700");
   const fb = C.fanucBlock(800, th("UNC-1/4-20"), "in", 0.7); assert(fb.lines.some((l) => /^G84 .*Z-0\.7000 /.test(l)), fb.lines.join("|"));
   const db = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.81), "in", 0.8104); assert(/ Z-0\.8104 /.test(db.lines[2]), db.lines[2]);
-  assert(/Z___/.test(C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in").lines[2]));
+  assert(/Z\?/.test(C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in").lines[2]));
 });
 t("NPS straight pipe 1/8-2: Allied drill primary, NPSC alternate", () => {
   const n = D.THREAD_LIST.filter((x) => x.series === "NPS (straight pipe)"); assert.equal(n.length, 9);

@@ -513,12 +513,12 @@
     $("t-feed").innerHTML = (S.units === "mm" ? fb.feed.toFixed(1) : fb.feed.toFixed(2)) + " <small>" + (S.units === "mm" ? "mm/min" : "ipm") + "</small>";
     const pitchTxt = S.units === "mm" ? C.pitchMm(t).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") + " mm" : dec(C.pitchIn(t), 5) + '"';
     $("t-feed-s").textContent = ts.rpm + " × " + pitchTxt;
-    $("t-code").innerHTML = fb.lines.map((l) => esc(l).replace(/^(M29|G84|G80|G2[01])/, '<span class="k">$1</span>')).join("<br>");
+    $("t-code").innerHTML = fb.lines.map((l) => esc(l).replace(/^(M29|G84|G80|G2[01])/, '<span class="k">$1</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>");
     const sp = S.units === "mm" ? Math.round(ts.sfm / D.M_TO_SFM) + " m/min" : Math.round(ts.sfm) + " SFM";
     const spHi = S.units === "mm" ? Math.round(ts.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ts.sfmHi) + " SFM";
     const lines = [
       "Speed " + sp + (ts.override ? " (yours)" : " — low end of published range (up to " + spHi + ")") + ". Starting point only.",
-      (S.depthIn > 0 && tapZ() > 0 ? "Z is filled from Hole depth (Z0 = top of part). Fill in X Y and R." : "Fill in X Y (hole position), Z (depth) and R (retract plane).") + " Feed must equal RPM × pitch exactly.",
+      (S.depthIn > 0 && tapZ() > 0 ? "Z is filled from Hole depth (Z0 = top of part). Replace each amber ? with X Y and R." : "Replace each amber ? with X Y (hole position), Z (depth) and R (retract plane).") + " Feed must equal RPM × pitch exactly.",
     ];
     if (!fb.exact) lines.push({ c: "warn", t: "Feed rounded for the F word. For exact sync use G95 (feed/rev) with F = pitch, or pick an RPM that gives an even feed." });
     if (t.pipe && t.type === "taper") lines.push("Pipe tap: go to depth set by the L1 plug gauge, not a fixed thread length.");
@@ -586,9 +586,9 @@
     $("d-ipm-s").textContent = o || ownIpr ? "rpm × feed/rev" : "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
     setChip($("d-chip"), ds.peck.level, ds.peck.text.split(":")[0].split(".")[0]);
     const db = C.drillBlock(e, S.units, dz);
-    $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>')).join("<br>");
+    $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>");
     const lines = [{ c: ds.peck.level === "green" ? "" : ds.peck.level === "amber" ? "warn" : "bad", t: ds.peck.text + (ds.peck.q ? " Q = " + len(ds.peck.q) + "." : "") }];
-    lines.push((dz > 0 ? "Z is filled from Hole depth, drill point included. Fill in X Y and R." : "Fill in X Y (hole position), Z (depth incl. drill point) and R (retract plane).") + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
+    lines.push((dz > 0 ? "Z is filled from Hole depth, drill point included. Replace each amber ? with X Y and R." : "Replace each amber ? with X Y (hole position), Z (depth incl. drill point) and R (retract plane).") + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
     if (e.sfm > ds.sfmHi * 1.005) lines.push({ c: "warn", t: "Your speed is above the top of the published range (" + (mm ? Math.round(ds.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ds.sfmHi) + " SFM") + "). Your call." });
     if (e.ipr > ds.iprHi * 1.005) lines.push({ c: "warn", t: "Your feed/rev is above the top of the published range (" + (mm ? (ds.iprHi * IN_MM).toFixed(3) + " mm/rev" : dec(ds.iprHi, 4) + " ipr") + "). Your call." });
     lines.push("Depth " + ds.ld.toFixed(1) + "×D. Low end used; the high end is the most aggressive published value (info only).");

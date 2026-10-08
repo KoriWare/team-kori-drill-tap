@@ -344,9 +344,9 @@
   function fanucBlock(rpm, t, units, zIn) {
     const feed = rigidFeed(rpm, t, units);
     const f = fWord(feed, units);
-    const z = zIn > 0 ? zWord(zIn, units) : "Z___";
+    const z = zIn > 0 ? zWord(zIn, units) : "Z?";
     return {
-      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 X___ Y___ " + z + " R___ F" + f.text, "G80"],
+      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 X? Y? " + z + " R? F" + f.text, "G80"],
       feed, exact: f.exact,
     };
   }
@@ -360,7 +360,7 @@
     const f = mm ? String(Math.round(ds.ipm * IN_MM)) : ds.ipm.toFixed(1);
     return {
       cycle: cyc,
-      lines: [mm ? "G21 (MM)" : "G20 (INCH)", "S" + ds.rpm + " M03", cyc + " X___ Y___ " + (zIn > 0 ? zWord(zIn, units) : "Z___") + " R___" + q + " F" + f, "G80"],
+      lines: [mm ? "G21 (MM)" : "G20 (INCH)", "S" + ds.rpm + " M03", cyc + " X? Y? " + (zIn > 0 ? zWord(zIn, units) : "Z?") + " R?" + q + " F" + f, "G80"],
     };
   }
 

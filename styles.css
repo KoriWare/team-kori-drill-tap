@@ -213,3 +213,5 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 #z-info .info:first-child{margin-top:10px}
 /* DEMO: tap-change sub-line under wear */
 .cmp .ro .line.mut{font-size:10.5px;color:var(--dim);opacity:.85;margin-top:0;padding-left:10px;border-left:1px solid rgba(232,197,71,.35);margin-left:2px}
+/* code boxes: "?" = fill this in (amber, Maria q1) */
+.code .q{color:var(--amber);font-weight:800;background:rgba(251,191,36,.14);border-radius:4px;padding:0 3px;margin:0 1px;box-shadow:inset 0 0 0 1px rgba(251,191,36,.45)}
