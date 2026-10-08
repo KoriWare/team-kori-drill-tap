@@ -40,6 +40,12 @@
  *   [TRU]   Tru-Edge "Solid Carbide Drills Feeds and Speeds" (SFM + IPR by diameter).
  *   [HAASID] Haas Tooling "Indexable Drills, Speeds and Feeds, Inch" (ISO groups,
  *           min / starting / max SFM, IPR by insert size A–H, 4×D / 5×D reductions).
+ *   [HARVEY] Harvey Tool "Speeds & Feeds — Miniature Drills" (series 200xx–204xx, 7036xx,
+ *           8100xx–8102xx), 1-page PDF SF_20000 (Feb 2025), uncoated carbide, Ø .015–.250":
+ *           https://harveyperformance.widen.net/content/ss7jrgaq3k/pdf/SF_20000.pdf
+ *           SECOND SOURCE ONLY (Oct 7 2026 cross-check, dt-research/harvey-feeds.md): never
+ *           feeds the min/max math. Cited as "also Harvey Tool" only where its printed number
+ *           falls inside the range the app already shows (see HARVEY_DRILL + band.harvey).
  *
  *  TAP SPEEDS
  *   [HAAST] Haas Tooling "High Performance Taps Recommendation Table" (HSS uncoated SFM).
@@ -758,7 +764,7 @@
       hbNote: "H1150 ≈ 28–33 HRC · H900 ≈ 40–44 HRC",
       drill: {
         hss: [{ maxHB: 300, morse: "ssDifficult_le300", red: "ph" }],
-        carbide: [{ maxHB: 450, tru: "ssHard", morse: "ssDifficult_le450" }],
+        carbide: [{ maxHB: 450, tru: "ssHard", morse: "ssDifficult_le450", harvey: { row: "ph_38_45", agrees: "feed" } }],
         indexable: [{ maxHB: 330, haas: "P5" }, { maxHB: 450, haas: "P6" }],
       },
       tap: {
@@ -852,7 +858,7 @@
       hbNote: "360 brass ≈ 80–120 HB",
       drill: {
         hss: [{ maxHB: 200, morse: "copperAlloy_le200", red: "brassBronze" }],
-        carbide: [{ maxHB: 200, tru: "brassBronze", morse: "copperAlloy_le200" }],
+        carbide: [{ maxHB: 200, tru: "brassBronze", morse: "copperAlloy_le200", harvey: { row: "cu", agrees: "feed" } }],
         indexable: [], // no brass row in the Haas indexable chart
       },
       tap: {
@@ -877,7 +883,7 @@
       // to annealed hardness (≈340 HB). Haas indexable lists Ti at 300–400 HB.
       drill: {
         hss: [{ maxHB: 340, morse: "tiAlloy_le250", red: "titanium" }],
-        carbide: [{ maxHB: 340, tru: "tiAlloy", morse: "tiAlloy_le250" }],
+        carbide: [{ maxHB: 340, tru: "tiAlloy", morse: "tiAlloy_le250", harvey: { row: "ti_29_37", agrees: "speed" } }],
         indexable: [{ maxHB: 400, haas: "S4" }],
       },
       tap: {
@@ -919,6 +925,22 @@
       },
     },
   ];
+
+  // [HARVEY] SF_20000 rows used as a SECOND source (copied as printed; IPR at HARVEY_DRILL.d).
+  // Only rows that AGREE with the app on the named quantity are listed here. Rows that disagree
+  // (aluminum, steels, 303/304, tool steels, Ti feed, Inconel) are written up in
+  // dt-research/harvey-feeds.md for Kori to pick from; no app number changed.
+  const HARVEY_DRILL = {
+    name: "Harvey Tool Miniature Drills speeds & feeds (SF_20000)",
+    url: "https://harveyperformance.widen.net/content/ss7jrgaq3k/pdf/SF_20000.pdf",
+    d: [0.015, 0.031, 0.047, 0.062, 0.078, 0.093, 0.125, 0.187, 0.250],
+    rows: {
+      // Copper alloys ≤28 Rc: brass / Al & Si bronze 375 SFM, phosphor bronze / Cu-Ni 170 SFM; one IPR row
+      cu: { label: "Copper alloys ≤28 Rc", minHB: 0, maxHB: 271, sfm: [170, 375], ipr: [0.00036, 0.00074, 0.00113, 0.00149, 0.00187, 0.00223, 0.00300, 0.00449, 0.00600] },
+      ti_29_37: { label: "Titanium alloys 29–37 Rc", minHB: 279, maxHB: 344, sfm: [100, 100], ipr: [0.00023, 0.00047, 0.00071, 0.00093, 0.00117, 0.00140, 0.00188, 0.00281, 0.00375] },
+      ph_38_45: { label: "17-4 / 15-5 / 13-8 / 440C row 38–45 Rc", minHB: 353, maxHB: 421, sfm: [90, 90], ipr: [0.00016, 0.00033, 0.00049, 0.00065, 0.00082, 0.00098, 0.00131, 0.00196, 0.00263] },
+    },
+  };
 
   const DRILL_MATERIALS = [
     { id: "hss", name: "HSS" },
@@ -1107,7 +1129,7 @@
     DEPTH_REDUCTION, D_MORSE_HSS, D_RED, D_TRU, D_MORSE_CARB, MORSE_HSS, REDLINE, TRUEDGE,
     MORSE_CARB, HAAS_BANDS, HAAS_IDX, TAP_SRC, MATERIALS, DRILL_MATERIALS, TAP_MATERIALS,
     DEMO_COST, M_TO_SFM, TD1, CLEAR_IN, CLEAR_MM, TROUBLE_RULES, TROUBLE_SRC, STI, STI_RULES, STI_SRC,
-    DEMO_REPAIR, FEATURES,
+    DEMO_REPAIR, FEATURES, HARVEY_DRILL,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = DATA;

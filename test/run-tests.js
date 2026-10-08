@@ -428,4 +428,32 @@ t("STI fill map: EM on 1/4-20 names every Heli-Coil-borrowed field; HC fill is {
   const ty = pick("UNC-1-1/2-6", "RC", 1.5); // 1×D Recoil T is a typo: only that row borrows
   assert.deepStrictEqual(ty.fill, { sink: "HC" }); assert.strictEqual(ty.lengths[0].fill.holeIn, "HC"); assert.deepStrictEqual(ty.lengths[1].fill, {});
 });
+t("Harvey Tool second source: cited only where its printed number sits inside the app's range; never changes a number", () => {
+  const H = D.HARVEY_DRILL, has = (r) => r.sources.some((x) => /^also Harvey Tool miniature drills · /.test(x));
+  const cases = [["cu", 100, "cu"], ["cu", 200, "cu"], ["ti64", 334, "ti_29_37"], ["ti64", 280, "ti_29_37"], ["ph174", 353, "ph_38_45"], ["ph174", 400, "ph_38_45"], ["ph174", 421, "ph_38_45"]];
+  for (const [mat, hb, row] of cases) {
+    const band = D.MATERIALS.find((m) => m.id === mat).drill.carbide[0];
+    assert.strictEqual(band.harvey.row, row);
+    const hv = H.rows[row];
+    H.d.forEach((d, i) => {
+      const r = C.drillStart(mat, "carbide", hb, d, 0);
+      assert(r.ok && has(r), mat + " " + hb + " " + d);
+      if (band.harvey.agrees === "feed") assert(hv.ipr[i] >= r.ipr - 1e-7 && hv.ipr[i] <= r.iprHi + 1e-7, mat + " feed " + d + ": " + hv.ipr[i] + " vs " + r.ipr + "-" + r.iprHi);
+      else hv.sfm.forEach((v) => assert(v >= r.sfm - 1e-9 && v <= r.sfmHi + 1e-9, mat + " speed " + v + " vs " + r.sfm + "-" + r.sfmHi));
+    });
+  }
+  // Not cited: outside Harvey's Ø range, outside its hardness row, other drill types, rows that disagree.
+  assert(!has(C.drillStart("ti64", "carbide", 334, 0.5, 0)));
+  assert(!has(C.drillStart("ti64", "carbide", 260, 0.125, 0)));
+  assert(!has(C.drillStart("ph174", "carbide", 300, 0.125, 0)));
+  assert(!has(C.drillStart("cu", "hss", 100, 0.125, 0)));
+  assert(!has(C.drillStart("cu", "carbide", 230, 0.125, 0))); // past the 200 HB band (derated): no claim
+  for (const m of ["al", "low_c", "alloy_ann", "alloy_ph", "tool", "ss303", "ss304", "in718", "ci_gray", "ci_duct"]) assert(!has(C.drillStart(m, "carbide", D.MATERIALS.find((x) => x.id === m).defaultHB, 0.125, 0)), m);
+  // Numbers unchanged by the citation
+  const cu = C.drillStart("cu", "carbide", 100, 0.125, 0);
+  assert.strictEqual(cu.sfm, 80); assert.strictEqual(cu.sfmHi, 250); assert(Math.abs(cu.ipr - 0.002) < 1e-12 && Math.abs(cu.iprHi - 0.004) < 1e-12);
+  const ti = C.drillStart("ti64", "carbide", 334, 0.25, 0);
+  assert.strictEqual(ti.sfm, 50); assert.strictEqual(ti.sfmHi, 100); assert(Math.abs(ti.ipr - 0.0015) < 1e-12 && Math.abs(ti.iprHi - 0.002) < 1e-12);
+  assert(/harveyperformance\.widen\.net\/content\/ss7jrgaq3k\/pdf\/SF_20000\.pdf$/.test(H.url));
+});
 console.log("\n" + n + " tests passed");

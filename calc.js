@@ -253,6 +253,11 @@
         out.sources.push("Morse carbide · " + mr.name);
       }
       iprLo = Math.min.apply(null, ipr); iprHi = Math.max.apply(null, ipr);
+      // Second source that agrees (citation only, never part of the min/max): [HARVEY] in data.js.
+      const H = DATA.HARVEY_DRILL, hv = band.harvey && H && H.rows[band.harvey.row];
+      if (hv && over <= 0 && hb >= hv.minHB && hb <= hv.maxHB && dIn >= H.d[0] - 1e-9 && dIn <= H.d[H.d.length - 1] + 1e-9) {
+        out.sources.push("also Harvey Tool miniature drills · " + hv.label + " (" + band.harvey.agrees + " agrees)");
+      }
     }
 
     let sfmLo = Math.min.apply(null, sfmVals), sfmHi = Math.max.apply(null, sfmVals);
