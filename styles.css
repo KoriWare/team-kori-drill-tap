@@ -305,3 +305,8 @@ body.is-ins .ins-t b{color:var(--cu2)}
 .ins-steps{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.55;color:var(--text)}
 .ins-steps li::marker{color:var(--cu2);font-family:var(--mono);font-weight:700}
 .ins .rep{margin-top:14px}
+.ins-chartrow{margin-top:10px}
+.ins-chart button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0}
+.ins-chart button b{font:600 12.5px var(--sans)}
+.ins-chart button small{font:600 11px var(--mono);color:var(--dim)}
+.ins-chart button.on small{color:var(--cu2)}

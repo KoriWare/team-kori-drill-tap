@@ -36,6 +36,16 @@
    * Until it exists the frame shows arithmetic-only lengths (x × nominal) and dashes, under the gold Sample bar. */
   const XS = [1, 1.5, 2, 2.5, 3];
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const CHART_NAME = { HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" };
+  let chart = "HC"; try { chart = localStorage.getItem("dt-ins-chart") || "HC"; } catch (e) {}
+  // Chart options: d.charts [{src,name,drillLabel}] when Jenny's calc returns it, else built from drill.alts.
+  function chartOpts(d) {
+    if (!d) return [];
+    if (Array.isArray(d.charts) && d.charts.length) return d.charts.map((c) => ({ src: c.src, name: c.name || CHART_NAME[c.src] || c.src, drill: c.drillLabel }));
+    const seen = {}, out = [];
+    (d.drill && d.drill.alts || []).forEach((a) => { if (!a || seen[a.src]) return; seen[a.src] = 1; out.push({ src: a.src, name: CHART_NAME[a.src] || a.src, drill: a.label }); });
+    return out;
+  }
   let lenX = 1.5; try { const v = parseFloat(localStorage.getItem("dt-ins-len")); if (XS.indexOf(v) >= 0) lenX = v; } catch (e) {}
   const SAMPLE_STEPS = ["Drill with the STI drill.", "Countersink the hole.", "Tap with the STI tap.", "Wind the insert in until it sits below the top.", "Break off the tang in a blind hole."];
 
@@ -67,7 +77,7 @@
     const st = window.DT_STATE; if (!st || !$("ins-acc")) return;
     const t = st.thread, S = st.S || {}, units = S.units;
     const C = window.DT_CALC || {};
-    let d = null; try { d = typeof C.sti === "function" ? C.sti(t, Object.assign({}, S, { insLen: lenX })) : null; } catch (e) { d = null; }
+    let d = null; try { d = typeof C.sti === "function" ? C.sti(t, Object.assign({}, S, { insLen: lenX, stiChart: chart })) : null; } catch (e) { d = null; }
     // Live only with sourced data: no DT_CALC.sti, or null for this size, hides the section, the switch and the Troubleshoot button.
     // (#ins-preview in the URL shows the gold-labeled sample frame for design reviews.)
     const preview = /ins-preview/.test(location.hash);
@@ -79,6 +89,10 @@
     if (was !== show) document.dispatchEvent(new CustomEvent("dt:insert", { detail: { on: !!window.DT_INSERT } }));
     if (!show) return;
     $("ins-sample").hidden = !!d;
+    const opts = chartOpts(d), differ = new Set(opts.map((o) => o.drill)).size > 1;
+    if (opts.length && !opts.some((o) => o.src === chart)) chart = opts[0].src;
+    $("ins-chartrow").hidden = !differ;
+    $("ins-chart").innerHTML = differ ? opts.map((o) => '<button type="button" data-chart="' + esc(o.src) + '" aria-pressed="' + (o.src === chart) + '"' + (o.src === chart ? ' class="on cu"' : "") + "><b>" + esc(o.name) + "</b><small>" + esc(o.drill) + "</small></button>").join("") : "";
     const pipe = !t || t.pipe;
     $("ins-badge").textContent = pipe ? "N/A" : t.label + " STI";
     if (pipe) { $("ins-drill").textContent = "—"; $("ins-tap").textContent = "—"; $("ins-chk").querySelector("span").textContent = "Inserts are for straight threads, not pipe threads."; return; }
@@ -122,6 +136,7 @@
     const cb = $("ins-on"); if (cb) cb.addEventListener("change", () => { setIns(cb.checked); if (cb.checked) { const acc = $("ins-acc"); if (acc) acc.open = true; } });
     const acc = $("ins-acc");
     if (acc) { try { acc.open = localStorage.getItem("dt-ins-open") === "1" || on; } catch (e) {} acc.addEventListener("toggle", () => { try { localStorage.setItem("dt-ins-open", acc.open ? "1" : "0"); } catch (e) {} }); }
+    const cz = $("ins-chart"); if (cz) cz.addEventListener("click", (e) => { const b = e.target.closest("[data-chart]"); if (!b) return; chart = b.dataset.chart; try { localStorage.setItem("dt-ins-chart", chart); } catch (er) {} renderSection(); });
     const lz = $("ins-len"); if (lz) lz.addEventListener("click", (e) => { const b = e.target.closest("[data-x]"); if (!b) return; lenX = parseFloat(b.dataset.x); try { localStorage.setItem("dt-ins-len", String(lenX)); } catch (er) {} renderSection(); });
     document.addEventListener("dt:change", renderSection);
     renderSection();
