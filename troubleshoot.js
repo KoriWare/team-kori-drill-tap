@@ -81,7 +81,7 @@
     const r = typeof window.DT_REPAIR === "function" ? window.DT_REPAIR() : null, on = !!window.DT_INSERT;
     const usd = (v) => "$" + v.toFixed(2);
     let t = '<div class="ts-rep"><div class="ts-rep-hd"><span class="lbl">Save the part with an insert</span></div>' +
-      '<button type="button" class="ts-rep-btn' + (on ? " on" : "") + '" data-ins>' + (on ? "✓ Insert (STI) is on · see Thread" : "Repair with an insert (STI)") + "</button>";
+      '<button type="button" class="ts-rep-btn' + (on ? " on" : "") + '" data-ins>' + (on ? "✓ Open Inserts · STI below" : "Repair with an insert (STI)") + "</button>";
     if (r) t += '<div class="ts-cost"><span class="lbl">DEMO $ · repair or scrap?</span>Sample repair is <b>' + usd(r.repair) + "</b> vs a <b>" + usd(r.part) + "</b> part, so " +
       (r.save >= 0 ? "repair wins by <b>" + usd(r.save) + "</b>." : "scrap wins by <b>" + usd(-r.save) + "</b>.") + " Type your own numbers in DEMO $ below.</div>";
     return t + "</div>";

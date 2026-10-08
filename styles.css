@@ -290,3 +290,18 @@ body.is-ins .ins-t b{color:var(--cu2)}
 .ts-rep-btn.on{color:var(--green);background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.5)}
 .ts-rep .ts-cost{margin-top:9px}
 .ts-rep .ts-cost .lbl{display:block}
+/* Inserts · STI section (Maria, ins2) */
+.ins-badge{margin-left:auto;font:700 10.5px var(--mono);letter-spacing:.08em;color:var(--cu2);background:rgba(232,137,74,.12);border:1px solid rgba(232,137,74,.5);padding:2px 8px;border-radius:999px}
+.ins .zstack{margin-top:10px}
+.ins-len button{font-family:var(--mono)}
+.ins-tbl{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;font:12.5px var(--mono)}
+.ins-tbl .r{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px;padding:7px 12px;border-top:1px solid var(--line);color:var(--text)}
+.ins-tbl .r:first-child{border-top:0}
+.ins-tbl .r.h{font:700 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);background:#0b1115}
+.ins-tbl .r b{color:var(--cu2);margin-right:4px}
+.ins-tbl .r.on{background:rgba(232,137,74,.1);box-shadow:inset 3px 0 0 var(--cu)}
+.ins .codewrap{margin-top:12px}
+.code .dimc{display:block;white-space:normal;color:var(--dim);font-family:var(--sans);font-size:12px;line-height:1.45}
+.ins-steps{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.55;color:var(--text)}
+.ins-steps li::marker{color:var(--cu2);font-family:var(--mono);font-weight:700}
+.ins .rep{margin-top:14px}
