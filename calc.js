@@ -99,7 +99,9 @@
     const taper = t.type === "taper";
     const status = taper
       ? { level: "amber", text: "Tapered pipe thread: table drill, check with plug gauge." }
-      : { level: "amber", text: "Parallel pipe thread (G, ISO 228): table drill, check with a G plug gauge. Seals on a washer or O-ring, not the thread." };
+      : t.id.indexOf("NPS-") === 0
+        ? { level: "amber", text: "Straight pipe thread (NPS): table drill, check with a plug gauge. NPSM and NPSC use different drills. Seals on a gasket or O-ring, not the thread." }
+        : { level: "amber", text: "Parallel pipe thread (G, ISO 228): table drill, check with a G plug gauge. Seals on a washer or O-ring, not the thread." };
     const info = taper ? [TAPER_INFO] : [];
     const out = { pipe: true, taper, table, rec: table[0], status, info, standard: t.standard };
     if (taper) {
@@ -339,17 +341,18 @@
     return { text: s, exact };
   }
 
-  function fanucBlock(rpm, t, units) {
+  function fanucBlock(rpm, t, units, zIn) {
     const feed = rigidFeed(rpm, t, units);
     const f = fWord(feed, units);
+    const z = zIn > 0 ? zWord(zIn, units) : "Z___";
     return {
-      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 X___ Y___ Z___ R___ F" + f.text, "G80"],
+      lines: [units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S" + rpm, "G84 X___ Y___ " + z + " R___ F" + f.text, "G80"],
       feed, exact: f.exact,
     };
   }
 
   // Drill canned cycle from the peck advice: G81 (no peck), G73 (chip-break), G83 (full retract).
-  function drillBlock(ds, units) {
+  function drillBlock(ds, units, zIn) {
     const mm = units === "mm";
     const m = /\b(G8[13]|G73)\b/.exec(ds.peck.text);
     const cyc = m ? m[1] : (ds.peck.q ? "G83" : "G81");
@@ -357,26 +360,108 @@
     const f = mm ? String(Math.round(ds.ipm * IN_MM)) : ds.ipm.toFixed(1);
     return {
       cycle: cyc,
-      lines: [mm ? "G21 (MM)" : "G20 (INCH)", "S" + ds.rpm + " M03", cyc + " X___ Y___ Z___ R___" + q + " F" + f, "G80"],
+      lines: [mm ? "G21 (MM)" : "G20 (INCH)", "S" + ds.rpm + " M03", cyc + " X___ Y___ " + (zIn > 0 ? zWord(zIn, units) : "Z___") + " R___" + q + " F" + f, "G80"],
     };
+  }
+
+  // ------------------------------------------------------------ thread class (minor Ø limits)
+  // UN internal (ASME B1.1, 2B/3B): min minor = basic minor D − 1.082532·P.
+  //   3B (all sizes) and 2B under 1/4": tol = 0.05·P^(2/3) + 0.03·P/D − 0.002, kept between 0.120·P and 0.394·P.
+  //   2B 1/4" and up: tol = 0.25·P − 0.40·P².
+  //   Checked against ASME B1.1 values: 1/4-20 2B .1960–.2070 / 3B .1960–.2067, #10-32 2B .1560–.1640,
+  //   #4-40 2B max .0939, 1-12 2B .9100–.9280 / 3B max .9198, 1-8 3B max .8797, #0-80 max .0514,
+  //   1/4-28 2B .211–.220, 3/8-24 2B .330–.340, #5-40 2B .0979–.1062, #8-36 2B .134–.142.
+  // ISO metric internal (ISO 965-1, 6H): min minor D1 = D − 1.082532·P, max = min + TD1(6).
+  const H_MINOR = 1.082532;
+  function minorLimits(t, cls) {
+    if (!t || t.pipe) return null;
+    if (isInch(t)) {
+      const P = 1 / t.tpi, D = t.major, basic = D - H_MINOR * P;
+      const c = cls === "3B" ? "3B" : "2B";
+      let tol;
+      if (c === "2B" && D >= 0.25) tol = 0.25 * P - 0.4 * P * P;
+      else tol = Math.min(0.394 * P, Math.max(0.12 * P, 0.05 * Math.pow(P, 2 / 3) + (0.03 * P) / D - 0.002));
+      // B1.1 prints 2B limits to 3 places from #6 up (4 places below #6) and 3B limits to 4 places.
+      const pl = c === "2B" && D >= 0.138 ? 3 : 4, r = (v) => Math.round(v * Math.pow(10, pl) + 1e-9) / Math.pow(10, pl);
+      return { cls: c, minIn: r(basic), maxIn: r(basic + tol), std: "ASME B1.1" };
+    }
+    const P = t.pitch, D = t.major, min = D - H_MINOR * P;
+    let g = 6, td = DATA.TD1[6][P];
+    if (!(td > 0)) { g = 5; td = DATA.TD1[5][P]; }
+    if (!(td > 0)) { g = 4; td = DATA.TD1[4][P]; }
+    if (!(td > 0)) return null;
+    return { cls: g + "H", minIn: min / IN_MM, maxIn: (min + td / 1000) / IN_MM, std: "ISO 965-1" };
+  }
+  // Where a drill lands in the band. Form taps push metal inward, so the drill isn't the finished minor Ø.
+  function classCheck(lim, drillIn, tapType) {
+    if (!lim || !(drillIn > 0)) return null;
+    if (tapType === "form") return { level: "amber", text: "Form tap: the minor Ø ends up smaller than the drill. Check with a go/no-go gauge." };
+    const e = 1e-6;
+    if (drillIn < lim.minIn - e) return { level: "amber", text: "Under min (tight) for " + lim.cls };
+    if (drillIn > lim.maxIn + e) return { level: "red", text: "Over max for " + lim.cls };
+    return { level: "green", text: "In " + lim.cls + " band" };
+  }
+
+  // ------------------------------------------------------------ clearance holes
+  // Inch: close / free fit drill chart (UVA physics shop chart; matches NORAMARK, TR Fastenings).
+  // Metric: ISO 273 fine (close) / medium (free).
+  function clearance(t) {
+    if (!t || t.pipe) return null;
+    if (isInch(t)) {
+      const r = DATA.CLEAR_IN.find((x) => Math.abs(x[0] - t.major) < 1e-4);
+      if (!r) return null;
+      return { close: { label: r[1], dIn: r[2] }, free: { label: r[3], dIn: r[4] }, std: "close / free fit chart" };
+    }
+    const r = DATA.CLEAR_MM.find((x) => Math.abs(x[0] - t.major) < 1e-6);
+    if (!r) return null;
+    return { close: { label: r[1] + " mm", dIn: r[1] / IN_MM }, free: { label: r[2] + " mm", dIn: r[2] / IN_MM }, std: "ISO 273" };
+  }
+
+  // ------------------------------------------------------------ hole depth chain
+  // Drill point length = D / (2·tan(θ/2)): ≈0.30·D at 118°, ≈0.23·D at 135°.
+  const pointLen = (dIn, deg) => (dIn > 0 && deg > 0 && deg < 180 ? dIn / (2 * Math.tan((deg * Math.PI) / 360)) : 0);
+  // Tap chamfer lengths in threads (shop rule of thumb, conservative end):
+  const CHAMFER = { bottoming: 2, plug: 4, taper: 8 };
+  /**
+   * Blind: thread depth → tap Z = thread + chamfer; drill full Ø = tap Z + 1 pitch (chip room); drill Z = that + point.
+   * Through: thickness → tap Z = thickness + chamfer + 1 pitch; drill Z = thickness + point + small breakout.
+   * All depths in inches, positive down from the top of the part.
+   */
+  function holeChain(o) {
+    const P = o.pitchIn, pt = pointLen(o.drillIn, o.pointDeg), ch = (CHAMFER[o.chamfer] || 4) * P;
+    if (o.mode === "through") {
+      const brk = o.breakIn > 0 ? o.breakIn : 0.02;
+      return { mode: "through", chamferIn: ch, pointIn: pt, tapZ: o.depthIn + ch + P, drillFull: o.depthIn + brk, drillZ: o.depthIn + brk + pt, breakIn: brk };
+    }
+    const tapZ = o.depthIn + ch, drillFull = tapZ + P;
+    return { mode: "blind", chamferIn: ch, pointIn: pt, tapZ, drillFull, drillZ: drillFull + pt, clearIn: P };
+  }
+  // Z word, negative down from Z0 at the top of the part. Inch 4 places, mm 3 (matches Q).
+  function zWord(depthIn, units) {
+    const v = units === "mm" ? depthIn * IN_MM : depthIn;
+    return "Z-" + v.toFixed(units === "mm" ? 3 : 4); // same style as the Q word
   }
 
   // ------------------------------------------------------------------ cost
   function snappedTapCost(o) {
     return o.taps * (o.tapCost + o.partValue + (o.lostMin / 60) * o.shopRate);
   }
+  // Wear swaps also cost the tap change time (changeMin at the shop rate). Breaks already
+  // include their own lost time, so the change time is not added to them (Stacey).
   function per1000(side, shared) {
     const breakEach = side.tapCost + shared.partValue + (shared.lostMin / 60) * shared.shopRate;
-    const wear = (1000 / side.holesPerTap) * side.tapCost;
+    const swaps = 1000 / side.holesPerTap;
+    const changes = swaps * ((shared.changeMin || 0) / 60) * shared.shopRate;
+    const wear = swaps * side.tapCost + changes;
     const breaks = (1000 / side.holesPerBreak) * breakEach;
-    return { wear, breaks, total: wear + breaks };
+    return { wear, changes, breaks, total: wear + breaks };
   }
 
   const API = {
     IN_MM, K, PCT_LIMIT, PCT_LOW, TAPER_INFO, findThread, pipeDrill, pitchIn, pitchMm, majorIn, tapDrillExact, pctFromDrill,
     pctStatus, nearestDrills, tapDrill, recommend, hrcToHb, hbToHrc, rpmFromSfm, sfmFromRpm,
     rpmFromMmin, mminFromRpm, interp, material, drillStart, peckAdvice, tapStart, rigidFeed, fWord,
-    fanucBlock, drillBlock, snappedTapCost, per1000,
+    fanucBlock, drillBlock, snappedTapCost, per1000, minorLimits, classCheck, clearance, pointLen, CHAMFER, holeChain, zWord,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.DT_CALC = API;

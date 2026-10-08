@@ -185,3 +185,17 @@ header h1 span{color:var(--cu2)}
 body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:rgba(10,14,17,.94);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:40;pointer-events:none}
 .tp-sheet{max-height:calc(100% - env(safe-area-inset-top) - 12px)}
+
+/* --- Round 1 features (plain scaffold; Maria's visual pass replaces) --- */
+.clsrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.clsrow .lbl{margin:0}
+.clsrow .seg{margin-top:0;min-width:96px}
+.clsrow .chip{margin-top:0}
+#cls-info{margin-top:6px}
+.clrrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.clrrow .lbl{margin:0 4px 0 0}
+.pill{font:11.5px var(--mono);color:var(--dim);padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:#0b1115}
+.pill b{color:var(--text);font-weight:600}
+.tp-star{flex:none;background:none;border:0;color:var(--dim);font-size:16px;line-height:1;padding:2px 4px;cursor:pointer}
+.tp-star.on{color:var(--gold)}
+.cmp .ro .line.mut{font-size:11px;opacity:.75;margin-top:0;padding-left:8px}

@@ -178,6 +178,17 @@
     ["1-3/4", 11, 53.746, 51.1, 51.0], ["2", 11, 59.614, 57.0, null],
   ];
 
+  // [NPS] ASME B1.20.1 straight pipe (NPSM mechanical / NPSC coupling) 1/8–2: [size, tpi, pipe OD in,
+  //       primary drill (Allied Machine NPS/NPSF tap drill chart), NPSC drill (Tameson pipe-thread
+  //       drilled-hole chart)]. NPSM and NPSC need different drills, so both are listed.
+  const NPS = [
+    ["1/8", 27, 0.405, L("S", 0.348), F("11/32")], ["1/4", 18, 0.540, F("29/64"), F("7/16")],
+    ["3/8", 18, 0.675, F("19/32"), F("37/64")], ["1/2", 14, 0.840, F("47/64"), F("23/32")],
+    ["3/4", 14, 1.050, F("15/16"), F("59/64")], ["1", 11.5, 1.315, F("1-3/16"), F("1-5/32")],
+    ["1-1/4", 11.5, 1.660, F("1-33/64"), F("1-1/2")], ["1-1/2", 11.5, 1.900, F("1-3/4"), F("1-3/4")],
+    ["2", 11.5, 2.375, F("2-7/32"), F("2-7/32")],
+  ];
+
   const THREAD_LIST = [];
   const pushInch = (series, list) => list.forEach(([size, tpi]) => {
     const id = series + "-" + size + "-" + tpi;
@@ -235,9 +246,50 @@
     });
   });
 
+  NPS.forEach(([size, tpi, od, drill, npsc]) => {
+    const id = "NPS-" + size;
+    const tbl = [{ label: drill.label, dIn: drill.d, note: "NPS / NPSM (Allied Machine)" }];
+    if (Math.abs(npsc.d - drill.d) > 1e-6) tbl.push({ label: npsc.label, dIn: npsc.d, note: "NPSC coupling (Tameson)" });
+    THREAD_LIST.push({
+      id, label: size + "-" + tpiLabel(tpi) + " NPS", series: "NPS (straight pipe)", system: "inch",
+      major: od, majorIsPipeOD: true, tpi, type: "parallel", pipe: true, common: false,
+      standard: "ASME B1.20.1", tapDrillTable: tbl,
+    });
+  });
+
   // Series order for the grouped <select>
   const THREAD_SERIES = ["UNC", "UNF", "UNEF", "ISO metric coarse", "ISO metric fine", "NPT (taper pipe)",
-    "BSPT / Rc (taper pipe)", "BSPP / G (parallel pipe)"];
+    "NPS (straight pipe)", "BSPT / Rc (taper pipe)", "BSPP / G (parallel pipe)"];
+
+  // ------------------------------------------------------------- THREAD CLASS
+  // [ISO 965-1:2013 Table 2] TD1 minor-diameter tolerance of internal threads, µm, by pitch (mm).
+  const TD1 = {
+    4: { 0.2: 38, 0.25: 45, 0.3: 53, 0.35: 63, 0.4: 71, 0.45: 80, 0.5: 90, 0.6: 100, 0.7: 112, 0.75: 118, 0.8: 125, 1: 150, 1.25: 170, 1.5: 190, 1.75: 212, 2: 236, 2.5: 280, 3: 315, 3.5: 355, 4: 375, 4.5: 425, 5: 450, 5.5: 475, 6: 500 },
+    5: { 0.25: 56, 0.3: 67, 0.35: 80, 0.4: 90, 0.45: 100, 0.5: 112, 0.6: 125, 0.7: 140, 0.75: 150, 0.8: 160, 1: 190, 1.25: 212, 1.5: 236, 1.75: 265, 2: 300, 2.5: 355, 3: 400, 3.5: 450, 4: 475, 4.5: 530, 5: 560, 5.5: 600, 6: 630 },
+    6: { 0.3: 85, 0.35: 100, 0.4: 112, 0.45: 125, 0.5: 140, 0.6: 160, 0.7: 180, 0.75: 190, 0.8: 200, 1: 236, 1.25: 265, 1.5: 300, 1.75: 335, 2: 375, 2.5: 450, 3: 500, 3.5: 560, 4: 600, 4.5: 670, 5: 710, 5.5: 750, 6: 800 },
+  };
+
+  // ------------------------------------------------------------- CLEARANCE HOLES
+  // [Inch] close / free fit drills: UVA physics shop "Clearance Hole Drill Sizes" chart, cross-checked
+  //        with NORAMARK and TR Fastenings (#2–1/2 identical). [major in, close, close in, free, free in]
+  const CLEAR_IN = [
+    [0.060, "#52", 0.0635, "#50", 0.0700], [0.073, "#48", 0.0760, "#46", 0.0810], [0.086, "#43", 0.0890, "#41", 0.0960],
+    [0.099, "#37", 0.1040, "#35", 0.1100], [0.112, "#32", 0.1160, "#30", 0.1285], [0.125, "#30", 0.1285, "#29", 0.1360],
+    [0.138, "#27", 0.1440, "#25", 0.1495], [0.164, "#18", 0.1695, "#16", 0.1770], [0.190, "#9", 0.1960, "#7", 0.2010],
+    [0.216, "#2", 0.2210, "#1", 0.2280], [0.25, "F", 0.2570, "H", 0.2660], [0.3125, "P", 0.3230, "Q", 0.3320],
+    [0.375, "W", 0.3860, "X", 0.3970], [0.4375, "29/64", 29 / 64, "15/32", 15 / 32], [0.5, "33/64", 33 / 64, "17/32", 17 / 32],
+    [0.5625, "37/64", 37 / 64, "19/32", 19 / 32], [0.625, "41/64", 41 / 64, "21/32", 21 / 32], [0.6875, "45/64", 45 / 64, "23/32", 23 / 32],
+    [0.75, "49/64", 49 / 64, "25/32", 25 / 32], [0.8125, "53/64", 53 / 64, "27/32", 27 / 32], [0.875, "57/64", 57 / 64, "29/32", 29 / 32],
+    [0.9375, "61/64", 61 / 64, "31/32", 31 / 32], [1, "1-1/64", 1 + 1 / 64, "1-1/32", 1 + 1 / 32],
+  ];
+  // [ISO 273:1979] metric clearance holes, mm: [thread Ø, fine (close), medium (free)]
+  const CLEAR_MM = [
+    [1, 1.1, 1.2], [1.2, 1.3, 1.4], [1.4, 1.5, 1.6], [1.6, 1.7, 1.8], [1.8, 2, 2.1], [2, 2.2, 2.4], [2.5, 2.7, 2.9],
+    [3, 3.2, 3.4], [3.5, 3.7, 3.9], [4, 4.3, 4.5], [5, 5.3, 5.5], [6, 6.4, 6.6], [7, 7.4, 7.6], [8, 8.4, 9],
+    [10, 10.5, 11], [12, 13, 13.5], [14, 15, 15.5], [16, 17, 17.5], [18, 19, 20], [20, 21, 22], [22, 23, 24],
+    [24, 25, 26], [27, 28, 30], [30, 31, 33], [33, 34, 36], [36, 37, 39], [39, 40, 42], [42, 43, 45], [45, 46, 48],
+    [48, 50, 52], [52, 54, 56], [56, 58, 62], [60, 62, 66], [64, 66, 70],
+  ];
 
   // ------------------------------------------------------------- DRILL SIZES
   // [B94] Number drills #1–#80 (in)
@@ -884,7 +936,7 @@
   // ------------------------------------------------------------- DEMO COSTS
   // Stacey's DEMO numbers — sample values only, not anyone's real shop rates.
   const DEMO_COST = {
-    partValue: 40, lostMin: 20, shopRate: 85, brokenTaps: 1,
+    partValue: 40, lostMin: 20, shopRate: 85, brokenTaps: 1, changeMin: 3,
     cut: { tapCost: 18, holesPerTap: 1500, holesPerBreak: 2000 },
     form: { tapCost: 28, holesPerTap: 4000, holesPerBreak: 8000 },
   };
@@ -893,7 +945,7 @@
     THREAD_LIST, THREAD_SERIES, TAPER, INCH_DRILLS, METRIC_DRILLS, NUMBER_DRILLS, LETTER_DRILLS, HRC_HB, LIMITS, DERATE,
     DEPTH_REDUCTION, D_MORSE_HSS, D_RED, D_TRU, D_MORSE_CARB, MORSE_HSS, REDLINE, TRUEDGE,
     MORSE_CARB, HAAS_BANDS, HAAS_IDX, TAP_SRC, MATERIALS, DRILL_MATERIALS, TAP_MATERIALS,
-    DEMO_COST, M_TO_SFM,
+    DEMO_COST, M_TO_SFM, TD1, CLEAR_IN, CLEAR_MM,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = DATA;

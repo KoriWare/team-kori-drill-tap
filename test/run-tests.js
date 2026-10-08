@@ -103,4 +103,53 @@ t("drill block: G81 shallow, G73 3-5xD HSS with Q, G83 deep, indexable never pec
   const d = C.drillBlock(C.drillStart("low_c", "indexable", 126, 0.75, 3), "in"); assert.equal(d.cycle, "G81"); assert(!/Q/.test(d.lines[2]));
   const e = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.8), "mm"); assert(/ Q5\.105 F\d+$/.test(e.lines[2]), e.lines[2]); assert.equal(e.lines[0], "G21 (MM)");
 });
+
+// --- Round 1 features
+t("tap change time: cut $58.00 (wear $14.83) ; form $20.10 (wear $8.06) at 3 min", () => {
+  const c = D.DEMO_COST, sh = { partValue: c.partValue, lostMin: c.lostMin, shopRate: c.shopRate, changeMin: c.changeMin };
+  assert.equal(c.changeMin, 3);
+  const cut = C.per1000(c.cut, sh), form = C.per1000(c.form, sh);
+  near(cut.wear, 14.83, 0.005, "cut wear"); near(cut.breaks, 43.17, 0.005, "cut breaks"); near(cut.total, 58.00, 0.005, "cut total");
+  near(form.wear, 8.06, 0.005, "form wear"); near(form.breaks, 12.04, 0.005, "form breaks"); near(form.total, 20.10, 0.005, "form total");
+});
+t("thread class minor limits match ASME B1.1 / ISO 965-1", () => {
+  const L = (id, c) => C.minorLimits(th(id), c);
+  const chk = (id, c, lo, hi) => { const l = L(id, c); near(l.minIn, lo, 0.00051, id + " " + c + " min"); near(l.maxIn, hi, 0.00051, id + " " + c + " max"); };
+  chk("UNC-1/4-20", "2B", 0.196, 0.207); chk("UNC-1/4-20", "3B", 0.1959, 0.2067);
+  chk("UNF-#10-32", "2B", 0.156, 0.164); chk("UNC-#4-40", "2B", 0.0849, 0.0939);
+  chk("UNC-1/2-13", "2B", 0.417, 0.434); chk("UNC-1/2-13", "3B", 0.4167, 0.4284);
+  chk("UNF-1-12", "2B", 0.910, 0.928); chk("UNF-1-12", "3B", 0.9098, 0.9198);
+  chk("UNC-1-8", "3B", 0.8647, 0.8797); chk("UNF-#0-80", "2B", 0.0465, 0.0514);
+  chk("UNF-1/4-28", "2B", 0.211, 0.220); chk("UNF-3/8-24", "2B", 0.330, 0.340);
+  const m6 = L("M6x1"); assert.equal(m6.cls, "6H"); near(m6.minIn * 25.4, 4.917, 0.001, "M6 min"); near(m6.maxIn * 25.4, 5.153, 0.001, "M6 max");
+  const m8 = L("M8x1.25"); near(m8.minIn * 25.4, 6.647, 0.001, "M8 min"); near(m8.maxIn * 25.4, 6.912, 0.001, "M8 max");
+  assert.equal(L("M1x0.25").cls, "5H"); assert.equal(L("NPT-1/2"), null);
+  const l = L("UNC-1/4-20", "2B");
+  assert.equal(C.classCheck(l, 0.201, "cut").level, "green"); assert.equal(C.classCheck(l, 0.1935, "cut").level, "amber");
+  assert.equal(C.classCheck(l, 0.209, "cut").level, "red"); assert.equal(C.classCheck(l, 0.2189, "form").level, "amber");
+});
+t("clearance drills: #10 #9/#7, 1/4 F/H, M8 8.4/9 mm, none past 1\" or for pipe", () => {
+  const a = C.clearance(th("UNC-#10-24")); assert.equal(a.close.label, "#9"); assert.equal(a.free.label, "#7"); near(a.free.dIn, 0.201, 1e-6, "#7");
+  const b = C.clearance(th("UNF-1/4-28")); assert.equal(b.close.label, "F"); assert.equal(b.free.label, "H");
+  const m = C.clearance(th("M8x1.25")); near(m.close.dIn * 25.4, 8.4, 1e-9, "M8 close"); near(m.free.dIn * 25.4, 9, 1e-9, "M8 free");
+  assert.equal(C.clearance(th("UNC-2-4.5")), null); assert.equal(C.clearance(th("NPT-1/2")), null);
+});
+t("drill point + hole depth chain + Z words in both blocks", () => {
+  near(C.pointLen(0.201, 118), 0.0604, 0.0001, "118 point"); near(C.pointLen(0.201, 135), 0.0416, 0.0001, "135 point");
+  const h = C.holeChain({ mode: "blind", depthIn: 0.5, pitchIn: 0.05, drillIn: 0.201, pointDeg: 118, chamfer: "plug" });
+  near(h.tapZ, 0.7, 1e-9, "tapZ"); near(h.drillZ, 0.8104, 0.0001, "drillZ");
+  const th2 = C.holeChain({ mode: "through", depthIn: 0.5, pitchIn: 0.05, drillIn: 0.201, pointDeg: 118, chamfer: "bottoming" });
+  near(th2.tapZ, 0.65, 1e-9, "thru tapZ"); near(th2.drillZ, 0.5804, 0.0001, "thru drillZ");
+  assert.equal(C.zWord(0.7, "in"), "Z-0.7000"); assert.equal(C.zWord(0.81039, "in"), "Z-0.8104"); assert.equal(C.zWord(0.5, "mm"), "Z-12.700");
+  const fb = C.fanucBlock(800, th("UNC-1/4-20"), "in", 0.7); assert(fb.lines.some((l) => /^G84 .*Z-0\.7000 /.test(l)), fb.lines.join("|"));
+  const db = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.81), "in", 0.8104); assert(/ Z-0\.8104 /.test(db.lines[2]), db.lines[2]);
+  assert(/Z___/.test(C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in").lines[2]));
+});
+t("NPS straight pipe 1/8-2: Allied drill primary, NPSC alternate", () => {
+  const n = D.THREAD_LIST.filter((x) => x.series === "NPS (straight pipe)"); assert.equal(n.length, 9);
+  assert(D.THREAD_SERIES.indexOf("NPS (straight pipe)") >= 0);
+  const r = C.tapDrill(th("NPS-1/2"), "cut", 0, "in"); assert.equal(r.rec.label, "47/64"); assert.equal(r.table[1].label, "23/32");
+  assert.equal(r.taper, false); assert(/NPS/.test(r.status.text));
+  assert.equal(C.tapDrill(th("NPS-1/8"), "cut", 0, "in").rec.label, "S");
+});
 console.log("\n" + n + " tests passed");

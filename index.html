@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=ds1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=ds1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=ds1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=ds1" />
-  <link rel="stylesheet" href="styles.css?v=ds1" />
+  <link rel="manifest" href="manifest.webmanifest?v=f1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=f1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=f1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=f1" />
+  <link rel="stylesheet" href="styles.css?v=f1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -36,20 +36,23 @@
     <section class="panel help">
       <details class="acc">
         <summary><span class="lbl">? Help · how to use</span></summary>
-        <p><b>1. Pick a thread.</b> Tap the size and start typing — <code>1/4-20</code>, <code>m6</code>, <code>1/2 npt</code> or a diameter like <code>.375</code> all work. Your recent picks and the most-used sizes are pinned at the top; every UNC, UNF, UNEF, ISO metric, NPT, BSPT and BSPP size is below, grouped by series.</p>
+        <p><b>1. Pick a thread.</b> Tap the size and start typing — <code>1/4-20</code>, <code>m6</code>, <code>1/2 npt</code> or a diameter like <code>.375</code> all work. Tap the <b>☆</b> on any size to make it a favorite (or press <code>*</code> on a highlighted row). Favorites, recent picks and the most-used sizes are pinned at the top; every UNC, UNF, UNEF, ISO metric, NPT, NPS, BSPT and BSPP size is below, grouped by series.</p>
         <p><b>2. Cut or form tap.</b> A cut tap cuts the thread out. A form tap pushes the metal into shape (no chips), so it needs a <b>bigger</b> drill. Default % thread: 75% cut, 65% form. You can type 50–100%.</p>
         <p><b>3. Read the drill.</b> You get the exact drill size, the nearest standard drills just under and just over (fraction / number / letter and metric), and the real % thread each one gives.</p>
         <ul>
           <li><b>Green</b> = good. <b>Amber</b> = check it (shallow thread, or a pipe thread that uses a table drill). <b>Red</b> = high torque, the tap may snap.</li>
           <li>More than ~75% thread barely adds strength but adds a lot of tap torque.</li>
-          <li><b>Pipe threads</b> (NPT, BSPT, BSPP) don't use the % formula. The app shows the published table drill. Tapered threads: check depth with an L1 plug gauge.</li>
+          <li><b>Thread class.</b> Pick 2B or 3B (inch) — metric is 6H. The green band in the drawing is the allowed minor Ø; the chip says if your drill lands in it, under it (tight) or over it. Form taps don't cut the minor, so check those with a gauge.</li>
+          <li><b>Clearance drill</b> for the bolt in the mating part: close fit and free fit (inch chart, ISO 273 metric).</li>
+          <li><b>Pipe threads</b> (NPT, NPS, BSPT, BSPP) don't use the % formula. The app shows the published table drill. Tapered threads: check depth with an L1 plug gauge. NPS lists the NPSM drill first and the NPSC (coupling) drill under it.</li>
         </ul>
         <p><b>4. Speeds &amp; feeds.</b> Set the work material and its hardness once (HB or HRC). Leave hardness blank and the app uses a typical value for that material. If the material is too soft for the HRC scale, switch to HB.</p>
         <p><b>5. Make the numbers yours.</b> Tap SFM and the drill's Speed, Spindle and Feed/rev boxes show the calculated values. Type over any of them (a dashed underline means you can edit it). Drill speed and spindle are linked through the drill Ø, so changing one updates the other. Tap <b>use calculated</b> to go back. Going above the published range shows a heads-up in the notes.</p>
-        <p><b>6. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Fill in X Y (hole position), Z (depth; include the drill point on drills) and R (retract plane). <b>Copy</b> above each box copies the whole block.</p>
+        <p><b>6. Hole depth.</b> Pick Blind or Through, type the full thread depth (or part thickness), the tap chamfer and the drill point (118° or 135°). The app works out <b>Tap to Z</b> (thread + chamfer threads) and <b>Drill to Z</b> (one pitch of clearance plus the point on blind holes, or a small breakout plus the point on through holes) and fills them into both code boxes.</p>
+        <p><b>7. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Z comes from Hole depth (Z0 = top of the part); fill in X Y (hole position) and R (retract plane). <b>Copy</b> above each box copies the whole block.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
-        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Type your own to estimate. They stay on your device and aren't in the share link.</p>
+        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Type your own to estimate. They stay on your device and aren't in the share link.</p>
         <p><b>On a PC</b> the tap and drill panels sit side by side. <b>On a phone</b>, add it to your Home Screen and it works offline after the first visit.</p>
       </details>
     </section>
@@ -81,6 +84,16 @@
         <div class="ro t"><div class="lbl" id="r-pct-lbl">Actual thread</div><div class="v" id="r-pct">—</div><div class="s" id="r-pct-s"></div></div>
       </div>
       <div class="chip" id="r-chip"><i></i><span>—</span></div>
+      <div class="clsrow" id="cls-row">
+        <div class="lbl">Thread class</div>
+        <div class="seg sm" id="cls-seg" role="group" aria-label="Thread class"></div>
+        <div class="chip" id="cls-chip"><i></i><span>—</span></div>
+      </div>
+      <div class="info" id="cls-info"></div>
+      <div class="clrrow" id="clr-row">
+        <div class="lbl">Clearance drill</div>
+        <span class="pill" id="clr-close">—</span><span class="pill" id="clr-free">—</span>
+      </div>
       <div id="r-info"></div>
       <table class="opts" id="r-opts" aria-label="Nearest standard drills"></table>
     </section>
@@ -99,6 +112,36 @@
         </div>
       </div>
       <div class="info" id="hard-note"></div>
+    </section>
+
+    <!-- HOLE DEPTH (shared by tap + drill G-code) -->
+    <section class="panel" aria-labelledby="hd-lbl">
+      <div class="lbl" id="hd-lbl">Hole depth · fills Z</div>
+      <div class="seg" role="group" aria-label="Hole type">
+        <button type="button" id="hole-blind" class="on" aria-pressed="true">Blind</button>
+        <button type="button" id="hole-thru" aria-pressed="false">Through</button>
+      </div>
+      <div class="row">
+        <label class="field"><div class="lbl" id="d-depth-lbl">Full thread depth (in)</div><input id="d-depth" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <label class="field"><div class="lbl">Tap chamfer</div><select id="t-chamf">
+          <option value="bottoming">Bottoming · ~2 threads</option>
+          <option value="plug" selected>Plug · ~4 threads</option>
+          <option value="taper">Taper · ~8 threads</option>
+        </select></label>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="lbl">Drill point</div>
+          <div class="seg sm" role="group" aria-label="Drill point angle">
+            <button type="button" id="pt-118" class="on" aria-pressed="true">118°</button><button type="button" id="pt-135" aria-pressed="false">135°</button>
+          </div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro t"><div class="lbl">Tap to Z</div><div class="v" id="z-tap">—</div><div class="s" id="z-tap-s"></div></div>
+        <div class="ro c"><div class="lbl">Drill to Z</div><div class="v" id="z-drill">—</div><div class="s" id="z-drill-s"></div></div>
+      </div>
+      <div id="z-info"></div>
     </section>
 
     <div class="duo">
@@ -125,7 +168,6 @@
       </div>
       <div class="row">
         <label class="field"><div class="lbl" id="d-dia-lbl">Drill Ø (in)</div><input id="d-dia" type="number" inputmode="decimal" min="0" step="any" /><div class="hint"><input type="checkbox" id="d-link" checked /> = tap drill</div></label>
-        <label class="field"><div class="lbl" id="d-depth-lbl">Hole depth (in)</div><input id="d-depth" type="number" inputmode="decimal" min="0" step="any" /></label>
       </div>
       <div class="readouts">
         <label class="ro ed"><div class="lbl" id="d-sfm-lbl">Speed</div><div class="vin"><input id="d-sfm" type="number" inputmode="decimal" min="0" step="any" placeholder="—" /><small id="d-sfm-u">SFM</small></div><div class="s" id="d-sfm-s"></div></label>
@@ -180,6 +222,7 @@
         </div>
         <div class="row">
           <label class="field"><div class="lbl">Taps snapped</div><input id="c-n" type="number" inputmode="numeric" min="0" step="1" /></label>
+          <label class="field"><div class="lbl">Tap change min</div><input id="c-chg" type="number" inputmode="decimal" min="0" step="any" /></label>
           <div class="ro" style="flex:2"><div class="lbl" id="c-snap-lbl">Snapped tap cost</div><div class="v" id="c-snap" style="color:var(--gold)">—</div></div>
         </div>
         <div class="sub">Per 1,000 holes · cut vs form</div>
@@ -196,8 +239,8 @@
             <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / tap (wear)</div><input id="c-form-life" type="number" inputmode="numeric" min="1" step="1" /></label>
             <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / break</div><input id="c-form-brk" type="number" inputmode="numeric" min="1" step="1" /></label>
           </div>
-          <div class="ro" id="c-cut-out"><div class="lbl">Cut · total</div><div class="v" id="c-cut-tot">—</div><div class="line"><span>wear</span><span id="c-cut-wear">—</span></div><div class="line"><span>breaks</span><span id="c-cut-breaks">—</span></div></div>
-          <div class="ro" id="c-form-out"><div class="lbl">Form · total</div><div class="v" id="c-form-tot">—</div><div class="line"><span>wear</span><span id="c-form-wear">—</span></div><div class="line"><span>breaks</span><span id="c-form-breaks">—</span></div></div>
+          <div class="ro" id="c-cut-out"><div class="lbl">Cut · total</div><div class="v" id="c-cut-tot">—</div><div class="line"><span>wear</span><span id="c-cut-wear">—</span></div><div class="line mut"><span>incl. tap changes</span><span id="c-cut-chg">—</span></div><div class="line"><span>breaks</span><span id="c-cut-breaks">—</span></div></div>
+          <div class="ro" id="c-form-out"><div class="lbl">Form · total</div><div class="v" id="c-form-tot">—</div><div class="line"><span>wear</span><span id="c-form-wear">—</span></div><div class="line mut"><span>incl. tap changes</span><span id="c-form-chg">—</span></div><div class="line"><span>breaks</span><span id="c-form-breaks">—</span></div></div>
         </div>
         <div class="info" id="c-verdict"></div>
       </div>
@@ -224,8 +267,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=ds1"></script>
-<script src="calc.js?v=ds1"></script>
-<script src="app.js?v=ds1"></script>
+<script src="data.js?v=f1"></script>
+<script src="calc.js?v=f1"></script>
+<script src="app.js?v=f1"></script>
 </body>
 </html>

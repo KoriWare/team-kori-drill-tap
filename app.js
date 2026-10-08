@@ -16,7 +16,8 @@
     tapType: "cut",
     pct: { cut: 75, form: 65 },
     scale: store.get(LS.scale, "HB"),
-    dDiaIn: 0.201, dLinked: true, depthIn: 0.5,
+    dDiaIn: 0.201, dLinked: true, depthIn: 0.375,
+    cls: store.get("dt-cls", "2B"), hole: "blind", chamf: "plug", pt: 118,
   };
 
   // ------------------------------------------------------------ formatting
@@ -62,9 +63,9 @@
       { k: "all", n: "All" },
       { k: "inch", n: "Inch", s: ["UNC", "UNF", "UNEF"] },
       { k: "metric", n: "Metric", s: ["ISO metric coarse", "ISO metric fine"] },
-      { k: "pipe", n: "Pipe", s: ["NPT (taper pipe)", "BSPT / Rc (taper pipe)", "BSPP / G (parallel pipe)"] },
+      { k: "pipe", n: "Pipe", s: ["NPT (taper pipe)", "NPS (straight pipe)", "BSPT / Rc (taper pipe)", "BSPP / G (parallel pipe)"] },
     ];
-    const REC_KEY = "dt-recent";
+    const REC_KEY = "dt-recent", FAV_KEY = "dt-fav";
     const norm = (x) => String(x).toLowerCase().replace(/×/g, "x").replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
     const compact = (x) => norm(x).replace(/[\s-]/g, "");
     let fam = "all", items = [], act = -1, lastFocus = null;
@@ -81,6 +82,9 @@
     const tags = (t) => (t.type === "taper" ? '<i class="tag cu">TAPER</i>' : t.pipe ? '<i class="tag">STRAIGHT</i>' : "");
     const recent = () => { try { return JSON.parse(store.get(REC_KEY, "[]")).filter((id) => C.findThread(id)); } catch (e) { return []; } };
     const pushRecent = (id) => store.set(REC_KEY, JSON.stringify([id].concat(recent().filter((x) => x !== id)).slice(0, 4)));
+    const favs = () => { try { return JSON.parse(store.get(FAV_KEY, "[]")).filter((id) => C.findThread(id)); } catch (e) { return []; } };
+    const isFav = (id) => favs().indexOf(id) >= 0;
+    const toggleFav = (id) => { const f = favs(); store.set(FAV_KEY, JSON.stringify(isFav(id) ? f.filter((x) => x !== id) : f.concat([id]))); };
     const inFam = (t) => fam === "all" || FAM.find((f) => f.k === fam).s.indexOf(t.series) >= 0;
 
     function hl(label, q) {
@@ -103,7 +107,8 @@
       const row = (t) => {
         const k = items.length; items.push(t); n++;
         return '<div class="tp-opt' + (t.id === cur ? " cur" : "") + '" role="option" id="tp-o-' + k + '" data-k="' + k + '" aria-selected="' + (t.id === cur) + '">' +
-          '<span class="tp-l">' + hl(t.label, q) + "</span>" + tags(t) + '<span class="tp-m">' + esc(meta(t)) + "</span></div>";
+          '<span class="tp-l">' + hl(t.label, q) + "</span>" + tags(t) + '<span class="tp-m">' + esc(meta(t)) + "</span>" +
+          '<button type="button" tabindex="-1" class="tp-star' + (isFav(t.id) ? " on" : "") + '" data-fav="' + esc(t.id) + '" aria-pressed="' + isFav(t.id) + '" aria-label="' + (isFav(t.id) ? "Remove " : "Add ") + esc(t.label) + (isFav(t.id) ? " from" : " to") + ' favorites">' + (isFav(t.id) ? "★" : "☆") + "</button></div>";
       };
       const group = (name, arr) => { if (arr.length) h += '<div class="tp-g" role="presentation">' + esc(name) + "<span>" + arr.length + "</span></div>" + arr.map(row).join(""); };
       if (norm(q)) {
@@ -112,6 +117,7 @@
         if (!r.length) h = '<div class="tp-none">No thread matches “' + esc(q) + '”.<br>Try <b>1/4-20</b>, <b>M8</b>, <b>3/8 npt</b> or a diameter like <b>.500</b>.</div>';
       } else {
         if (fam === "all") {
+          group("Favorites", favs().map((id) => C.findThread(id)));
           group("Recent", recent().map((id) => C.findThread(id)));
           group("Most used", D.THREAD_LIST.filter((t) => t.common));
         }
@@ -172,15 +178,20 @@
       };
       $("thread-btn").closest(".field").onclick = open; // whole Size box is the tap target
       $("tp").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) close(); });
-      $("tp-list").onclick = (e) => { const o = e.target.closest(".tp-opt"); if (o) pick(items[+o.dataset.k]); };
+      $("tp-list").onclick = (e) => {
+        const st = e.target.closest(".tp-star");
+        if (st) { e.stopPropagation(); const L = $("tp-list"), y = L.scrollTop; toggleFav(st.dataset.fav); render(); L.scrollTop = y; return; }
+        const o = e.target.closest(".tp-opt"); if (o) pick(items[+o.dataset.k]);
+      };
       $("tp-q").oninput = render;
       $("tp").addEventListener("keydown", (e) => {
         if (e.key === "Escape") { e.preventDefault(); close(); }
         else if (e.key === "ArrowDown") { e.preventDefault(); setAct(Math.min(items.length - 1, act + 1)); }
         else if (e.key === "ArrowUp") { e.preventDefault(); setAct(Math.max(0, act - 1)); }
         else if (e.key === "Enter" && act >= 0 && items[act]) { e.preventDefault(); pick(items[act]); }
+        else if (e.key === "*" && act >= 0 && items[act]) { e.preventDefault(); const k = act, L = $("tp-list"), y = L.scrollTop; toggleFav(items[k].id); render(); L.scrollTop = y; setAct(Math.min(k, items.length - 1)); }
         else if (e.key === "Tab") { // keep focus inside the sheet
-          const f = Array.from($("tp").querySelectorAll("button,input")); const i = f.indexOf(document.activeElement);
+          const f = Array.from($("tp").querySelectorAll("button:not([tabindex='-1']),input")); const i = f.indexOf(document.activeElement);
           if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
         }
       });
@@ -248,8 +259,18 @@
     }
     let s = DEFS;
     s += '<rect x="' + crest + '" y="20" width="' + (cR - crest) + '" height="180" fill="url(#xbore)"/>';
+    // thread-class band: allowed minor Ø (min..max) on each wall, translucent green
+    let band = "";
+    if (o.band) {
+      const x1 = root + o.band.lo, x2 = root + o.band.hi, w = Math.max(1.5, x2 - x1);
+      [[x1, w], [rR - (x2 - root), w]].forEach(([x, bw]) => {
+        band += '<rect x="' + x.toFixed(1) + '" y="22" width="' + bw.toFixed(1) + '" height="176" fill="#2dd4bf" opacity=".18"/>' +
+          '<path d="M' + x.toFixed(1) + " 22 V198 M" + (x + bw).toFixed(1) + ' 22 V198" stroke="#2dd4bf" stroke-width=".8" opacity=".55"/>';
+      });
+    }
     s += '<path d="M20 20 H' + root + " L" + P(L) + " L" + root + ' 200 H20Z" fill="url(#xh)" stroke="#3a4c57" stroke-width="1.5" stroke-linejoin="round"/>';
     s += '<path d="M338 20 H' + rR + " L" + P(R) + " L" + rR + ' 200 H338Z" fill="url(#xh)" stroke="#3a4c57" stroke-width="1.5" stroke-linejoin="round"/>';
+    s += band;
     // drill wall (minor Ø) = copper dashed, thread form = teal
     s += '<path d="M' + crest + " 22 V198 M" + cR + ' 22 V198" stroke="#e8894a" stroke-width="1" stroke-dasharray="3 4" opacity=".7"/>';
     s += '<polyline points="' + PL(L) + '" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linejoin="round"/><polyline points="' + PL(R) + '" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linejoin="round"/>';
@@ -315,7 +336,9 @@
       $("r-drill-s").textContent = "table drill · " + r.standard;
       $("r-pct-lbl").textContent = "Thread type";
       $("r-pct").innerHTML = r.taper ? "1:16<small> taper</small>" : "parallel";
-      $("r-pct-s").textContent = r.taper ? "1°47′ per side" : "G · ISO 228";
+      const nps = t.id.indexOf("NPS-") === 0;
+      $("r-pct-s").textContent = r.taper ? "1°47′ per side" : nps ? "NPS · ASME B1.20.1" : "G · ISO 228";
+      $("cls-row").hidden = true; $("cls-info").hidden = true; $("clr-row").hidden = true;
       setChip($("r-chip"), r.status.level, r.status.text);
       const lines = r.info.map((x) => ({ t: x }));
       if (r.taper) {
@@ -328,7 +351,7 @@
       const foot = t.label.toUpperCase() + (r.taper ? " · TAPER EXAGGERATED FOR CLARITY" : " · NOT TO SCALE");
       svg.innerHTML = r.taper
         ? drawTaper({ L1: r.L1In, L2: r.L2In, tpi: t.tpi, L1Txt: lenBare(r.L1In), L2Txt: lenBare(r.L2In), foot })
-        : drawParallel({ amp: 12, big: "G", bigColor: COL.amber, sub: "PARALLEL PIPE", majorTxt: "MAJOR " + lenBare(C.majorIn(t)), drillTxt: "DRILL " + lenBare(r.rec.dIn), foot });
+        : drawParallel({ amp: 12, big: nps ? "NPS" : "G", bigColor: COL.amber, sub: nps ? "STRAIGHT PIPE" : "PARALLEL PIPE", majorTxt: "MAJOR " + lenBare(C.majorIn(t)), drillTxt: "DRILL " + lenBare(r.rec.dIn), foot });
       return;
     }
     let pct = num($("pct"));
@@ -359,13 +382,77 @@
       "<tr><td>exact</td><td>" + esc(lenBare(r.exactIn)) + "</td><td>" + pct + "%</td><td></td></tr>" +
       row("inch", "under", r.inch.under) + row("inch", "over", r.inch.over) + row("metric", "under", r.metric.under) + row("metric", "over", r.metric.over);
     const p = rec ? rec.pct : pct;
+    const ampOf = (pc) => 4 + 16 * Math.min(1, Math.max(0, pc / 100));
+    const lim = renderClass(t, rec ? rec.dIn : r.exactIn);
+    renderClear(t);
+    let band = null;
+    if (lim && S.tapType === "cut") {
+      const nat = (dIn) => (t.system === "metric" ? dIn * IN_MM : dIn);
+      band = { lo: ampOf(C.pctFromDrill(t, "cut", nat(lim.maxIn))), hi: ampOf(C.pctFromDrill(t, "cut", nat(lim.minIn))) };
+    }
     svg.innerHTML = drawParallel({
-      amp: 4 + 16 * Math.min(1, Math.max(0, p / 100)), big: Math.round(p) + "%",
+      band, amp: ampOf(p), big: Math.round(p) + "%",
       bigColor: COL[rec ? rec.status.level : "red"], sub: "THREAD ENGAGEMENT",
       majorTxt: "MAJOR " + lenBare(C.majorIn(t)), drillTxt: "DRILL " + lenBare(rec ? rec.dIn : r.exactIn),
       foot: t.label.toUpperCase() + " · NOT TO SCALE",
     });
   }
+
+  // Thread class (2B/3B inch, 6H metric): allowed minor Ø and where the drill lands.
+  function renderClass(t, drillIn) {
+    const inch = t.system !== "metric", seg = $("cls-seg");
+    const opts = inch ? ["2B", "3B"] : ["6H"], cls = inch ? (S.cls === "3B" ? "3B" : "2B") : "6H";
+    const want = opts.join(",") + "|" + cls;
+    if (seg.dataset.k !== want) {
+      seg.dataset.k = want;
+      seg.innerHTML = opts.map((o) => '<button type="button" data-cls="' + o + '" aria-pressed="' + (o === cls) + '"' + (o === cls ? ' class="on"' : "") + ">" + o + "</button>").join("");
+    }
+    const lim = C.minorLimits(t, cls);
+    $("cls-row").hidden = !lim; $("cls-info").hidden = !lim;
+    if (!lim) return null;
+    const chk = C.classCheck(lim, drillIn, S.tapType);
+    setChip($("cls-chip"), chk.level, chk.text);
+    const rng = S.units === "mm" || !inch ? (lim.minIn * IN_MM).toFixed(3) + "–" + (lim.maxIn * IN_MM).toFixed(3) + " mm" : dec(lim.minIn, 4) + "–" + dec(lim.maxIn, 4) + '"';
+    let txt = "Minor Ø " + lim.cls + " " + rng + " (" + lim.std + ")." + (S.tapType === "cut" ? " Green band in the drawing." : "");
+    if (!inch && lim.cls !== "6H") txt += " ISO lists no 6H for this pitch, so " + lim.cls + " is shown.";
+    $("cls-info").textContent = txt;
+    return lim;
+  }
+  function renderClear(t) {
+    const c = C.clearance(t);
+    $("clr-row").hidden = !c;
+    if (!c) return;
+    const pill = (nm, o) => nm + " <b>" + esc(o.label) + "</b>" + (/mm$/.test(o.label) && S.units === "mm" ? "" : " · " + esc(len(o.dIn)));
+    $("clr-close").innerHTML = pill("Close fit", c.close); $("clr-free").innerHTML = pill("Free fit", c.free);
+    $("clr-row").title = c.std;
+  }
+
+  // Hole depth chain → Z words for both code boxes (Z0 = top of part).
+  function hole() {
+    const t = curThread();
+    return C.holeChain({ mode: S.hole, depthIn: S.depthIn, pitchIn: C.pitchIn(t), drillIn: S.dDiaIn, pointDeg: S.pt, chamfer: S.chamf });
+  }
+  function tapZ() { const t = curThread(); return t.pipe && t.type === "taper" ? 0 : hole().tapZ; }
+  function renderHole() {
+    const t = curThread(), h = hole(), mm = S.units === "mm", taper = t.pipe && t.type === "taper";
+    if (document.activeElement !== $("d-depth")) $("d-depth").value = mm ? (S.depthIn * IN_MM).toFixed(2) : S.depthIn.toFixed(4);
+    $("d-depth-lbl").textContent = (S.hole === "blind" ? "Full thread depth" : "Part thickness") + " (" + S.units + ")";
+    const b = (v) => lenBare(v);
+    $("z-tap").textContent = taper ? "by gauge" : C.zWord(h.tapZ, S.units);
+    $("z-tap-s").textContent = taper ? "L1 plug gauge sets depth" : S.hole === "blind"
+      ? "thread " + b(S.depthIn) + " + chamfer " + b(h.chamferIn)
+      : "thick " + b(S.depthIn) + " + chamfer " + b(h.chamferIn) + " + 1P " + b(C.pitchIn(t));
+    $("z-drill").textContent = C.zWord(h.drillZ, S.units);
+    $("z-drill-s").textContent = S.hole === "blind"
+      ? "tap Z + 1P " + b(h.clearIn) + " + point " + b(h.pointIn)
+      : "thick + breakout " + b(h.breakIn) + " + point " + b(h.pointIn);
+    const lines = [S.hole === "blind"
+      ? "Blind: tap Z = thread depth + chamfer (" + D_CH[S.chamf] + " threads). Drill full Ø one pitch deeper, plus the " + S.pt + "° point."
+      : "Through: tap past the bottom by the chamfer plus one pitch. Drill breaks out " + b(h.breakIn) + " plus the point."];
+    if (S.depthIn <= 0) lines.push({ c: "warn", t: "Enter a depth above 0 to fill Z." });
+    infoLines($("z-info"), lines);
+  }
+  const D_CH = { bottoming: "~2", plug: "~4", taper: "~8" };
 
   function renderTap() {
     const t = curThread(), h = hb();
@@ -382,7 +469,7 @@
       infoLines($("t-info"), [{ c: ts.blocked ? "bad" : "warn", t: ts.reason || "Check inputs." }]);
       return;
     }
-    const fb = C.fanucBlock(ts.rpm, t, S.units);
+    const fb = C.fanucBlock(ts.rpm, t, S.units, S.depthIn > 0 ? tapZ() : 0);
     $("t-rpm").innerHTML = ts.rpm + " <small>rpm</small>";
     $("t-rpm-s").textContent = ts.override ? "your speed" : "up to " + ts.rpmHi + " rpm published";
     $("t-feed").innerHTML = (S.units === "mm" ? fb.feed.toFixed(1) : fb.feed.toFixed(2)) + " <small>" + (S.units === "mm" ? "mm/min" : "ipm") + "</small>";
@@ -393,7 +480,7 @@
     const spHi = S.units === "mm" ? Math.round(ts.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ts.sfmHi) + " SFM";
     const lines = [
       "Speed " + sp + (ts.override ? " (yours)" : " — low end of published range (up to " + spHi + ")") + ". Starting point only.",
-      "Fill in X Y (hole position), Z (depth) and R (retract plane). Feed must equal RPM × pitch exactly.",
+      (S.depthIn > 0 && tapZ() > 0 ? "Z is filled from Hole depth (Z0 = top of part). Fill in X Y and R." : "Fill in X Y (hole position), Z (depth) and R (retract plane).") + " Feed must equal RPM × pitch exactly.",
     ];
     if (!fb.exact) lines.push({ c: "warn", t: "Feed rounded for the F word. For exact sync use G95 (feed/rev) with F = pitch, or pick an RPM that gives an even feed." });
     if (t.pipe && t.type === "taper") lines.push("Pipe tap: go to depth set by the L1 plug gauge, not a fixed thread length.");
@@ -431,8 +518,9 @@
   function renderDrill() {
     if (S.dLinked && lastRec) S.dDiaIn = lastRec.dIn;
     if (document.activeElement !== $("d-dia")) $("d-dia").value = S.units === "mm" ? (S.dDiaIn * IN_MM).toFixed(2) : S.dDiaIn.toFixed(4);
-    if (document.activeElement !== $("d-depth")) $("d-depth").value = S.units === "mm" ? (S.depthIn * IN_MM).toFixed(1) : S.depthIn.toFixed(3);
-    const ds = C.drillStart($("mat").value, $("drillmat").value, hb(), S.dDiaIn, S.depthIn);
+    renderHole();
+    const dz = S.depthIn > 0 ? hole().drillZ : 0;
+    const ds = C.drillStart($("mat").value, $("drillmat").value, hb(), S.dDiaIn, dz);
     const mm = S.units === "mm";
     $("d-sfm-u").textContent = mm ? "m/min" : "SFM"; $("d-ipr-u").textContent = mm ? "mm/rev" : "ipr";
     const edIds = ["d-sfm", "d-rpm", "d-ipr"];
@@ -459,10 +547,10 @@
     $("d-ipm").innerHTML = mm ? Math.round(e.ipm * IN_MM) + " <small>mm/min</small>" : e.ipm.toFixed(1) + " <small>ipm</small>";
     $("d-ipm-s").textContent = o || ownIpr ? "rpm × feed/rev" : "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
     setChip($("d-chip"), ds.peck.level, ds.peck.text.split(":")[0].split(".")[0]);
-    const db = C.drillBlock(e, S.units);
+    const db = C.drillBlock(e, S.units, dz);
     $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>')).join("<br>");
     const lines = [{ c: ds.peck.level === "green" ? "" : ds.peck.level === "amber" ? "warn" : "bad", t: ds.peck.text + (ds.peck.q ? " Q = " + len(ds.peck.q) + "." : "") }];
-    lines.push("Fill in X Y (hole position), Z (depth incl. drill point) and R (retract plane)." + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
+    lines.push((dz > 0 ? "Z is filled from Hole depth, drill point included. Fill in X Y and R." : "Fill in X Y (hole position), Z (depth incl. drill point) and R (retract plane).") + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
     if (e.sfm > ds.sfmHi * 1.005) lines.push({ c: "warn", t: "Your speed is above the top of the published range (" + (mm ? Math.round(ds.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ds.sfmHi) + " SFM") + "). Your call." });
     if (e.ipr > ds.iprHi * 1.005) lines.push({ c: "warn", t: "Your feed/rev is above the top of the published range (" + (mm ? (ds.iprHi * IN_MM).toFixed(3) + " mm/rev" : dec(ds.iprHi, 4) + " ipr") + "). Your call." });
     lines.push("Depth " + ds.ld.toFixed(1) + "×D. Low end used; the high end is the most aggressive published value (info only).");
@@ -474,7 +562,7 @@
 
   function renderCost() {
     const g = (id) => { const v = num($(id)); return v >= 0 ? v : 0; };
-    const shared = { partValue: g("c-part"), lostMin: g("c-min"), shopRate: g("c-rate") };
+    const shared = { partValue: g("c-part"), lostMin: g("c-min"), shopRate: g("c-rate"), changeMin: g("c-chg") };
     const side = (k) => ({ tapCost: g("c-" + k + "-cost"), holesPerTap: g("c-" + k + "-life"), holesPerBreak: g("c-" + k + "-brk") });
     const cut = side("cut"), form = side("form");
     const snapSide = S.tapType === "form" ? form : cut;
@@ -482,9 +570,9 @@
     $("c-snap").textContent = money(C.snappedTapCost(Object.assign({ taps: g("c-n"), tapCost: snapSide.tapCost }, shared)));
     const ok = (s) => s.holesPerTap > 0 && s.holesPerBreak > 0;
     const put = (k, s) => {
-      if (!ok(s)) { ["tot", "wear", "breaks"].forEach((x) => { $("c-" + k + "-" + x).textContent = "—"; }); return null; }
+      if (!ok(s)) { ["tot", "wear", "chg", "breaks"].forEach((x) => { $("c-" + k + "-" + x).textContent = "—"; }); return null; }
       const r = C.per1000(s, shared);
-      $("c-" + k + "-tot").textContent = money(r.total); $("c-" + k + "-wear").textContent = money(r.wear); $("c-" + k + "-breaks").textContent = money(r.breaks);
+      $("c-" + k + "-tot").textContent = money(r.total); $("c-" + k + "-wear").textContent = money(r.wear); $("c-" + k + "-breaks").textContent = money(r.breaks); $("c-" + k + "-chg").textContent = money(r.changes);
       return r;
     };
     const rc = put("cut", cut), rf = put("form", form);
@@ -499,7 +587,6 @@
     segSet(mm ? $("u-mm") : $("u-in"), [mm ? $("u-in") : $("u-mm")]);
     $("tap-ov-lbl").textContent = mm ? "Tap m/min" : "Tap SFM";
     $("d-dia-lbl").textContent = "Drill Ø (" + S.units + ")";
-    $("d-depth-lbl").textContent = "Hole depth (" + S.units + ")";
     $("cv1-lbl").textContent = mm ? "m/min ↔ RPM" : "SFM ↔ RPM";
     $("cv2-lbl").textContent = mm ? "mm/rev ↔ mm/min" : "IPR ↔ IPM";
     $("cv-d-lbl").textContent = mm ? "Ø mm" : "Ø in";
@@ -563,7 +650,7 @@
     fill($("tapmat"), D.TAP_MATERIALS, "hss");
     fill($("drillmat"), D.DRILL_MATERIALS, "hss");
     const c = D.DEMO_COST;
-    $("c-part").value = c.partValue; $("c-min").value = c.lostMin; $("c-rate").value = c.shopRate; $("c-n").value = c.brokenTaps;
+    $("c-part").value = c.partValue; $("c-min").value = c.lostMin; $("c-rate").value = c.shopRate; $("c-n").value = c.brokenTaps; $("c-chg").value = c.changeMin;
     ["cut", "form"].forEach((k) => { $("c-" + k + "-cost").value = c[k].tapCost; $("c-" + k + "-life").value = c[k].holesPerTap; $("c-" + k + "-brk").value = c[k].holesPerBreak; });
     const demoOn = store.get(LS.demo, "1") === "1";
     $("demo-on").checked = demoOn; $("demo-body").hidden = !demoOn;
@@ -599,7 +686,15 @@
       const v = num($("d-dia")); if (!(v > 0)) return;
       S.dLinked = false; $("d-link").checked = false; S.dDiaIn = S.units === "mm" ? v / IN_MM : v; renderDrill();
     };
-    $("d-depth").oninput = () => { const v = num($("d-depth")); if (!(v >= 0)) return; S.depthIn = S.units === "mm" ? v / IN_MM : v; renderDrill(); };
+    $("d-depth").oninput = () => { const v = num($("d-depth")); if (!(v >= 0)) return; S.depthIn = S.units === "mm" ? v / IN_MM : v; renderTap(); renderDrill(); };
+    $("d-depth").onblur = renderDrill;
+    const holeSet = () => { segSet(S.hole === "blind" ? $("hole-blind") : $("hole-thru"), [S.hole === "blind" ? $("hole-thru") : $("hole-blind")]); renderTap(); renderDrill(); };
+    $("hole-blind").onclick = () => { S.hole = "blind"; holeSet(); };
+    $("hole-thru").onclick = () => { S.hole = "through"; holeSet(); };
+    $("t-chamf").onchange = () => { S.chamf = $("t-chamf").value; renderTap(); renderDrill(); };
+    $("pt-118").onclick = () => { S.pt = 118; segSet($("pt-118"), [$("pt-135")]); renderDrill(); };
+    $("pt-135").onclick = () => { S.pt = 135; segSet($("pt-135"), [$("pt-118")]); renderDrill(); };
+    $("cls-seg").onclick = (e) => { const b = e.target.closest("[data-cls]"); if (!b) return; S.cls = b.dataset.cls; store.set("dt-cls", S.cls); renderTapDrill(); };
     document.querySelectorAll(".demo input[type=number]").forEach((el) => { el.oninput = renderCost; });
     $("demo-on").onchange = () => { $("demo-body").hidden = !$("demo-on").checked; store.set(LS.demo, $("demo-on").checked ? "1" : "0"); };
     $("cv-d").oninput = () => cvSpeed("sfm"); $("cv-sfm").oninput = () => cvSpeed("sfm"); $("cv-rpm").oninput = () => cvSpeed("rpm");
@@ -620,7 +715,7 @@
       if (!e.isTrusted) return;
       if (e.type === "click") {
         const t = e.target;
-        if (!(t.closest && (t.closest(".tp-opt") || t.closest("#tt-cut,#tt-form,#h-hb,#h-hrc")))) return;
+        if (!(t.closest && (t.closest(".tp-opt") || t.closest("#tt-cut,#tt-form,#h-hb,#h-hrc,#hole-blind,#hole-thru,#pt-118,#pt-135,#cls-seg")))) return;
       } else if (e.target && e.target.id === "tp-q") return; // typing in search alone isn't a change
       tag.hidden = true;
       ["input", "change", "click"].forEach((ev) => document.removeEventListener(ev, hide, true));
