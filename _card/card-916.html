@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:#0a0d10;overflow:hidden}
+.card{position:relative;width:1080px;height:1920px;padding:120px 84px 0;overflow:hidden;text-align:center;
+ background:radial-gradient(ellipse at 85% 40%,rgba(232,137,74,.28),transparent 50%),
+ radial-gradient(ellipse at 5% 75%,rgba(45,212,191,.16),transparent 45%),#0a0d10;
+ font-family:'Inter',sans-serif;color:#f2f2f7}
+.card:before{content:"";position:absolute;inset:30px;border:1.5px solid #24323a;border-radius:44px;z-index:9;pointer-events:none}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:30px;letter-spacing:.18em;color:#2dd4bf;font-weight:600}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:112px;line-height:.98;margin-top:24px;letter-spacing:-.02em}
+h1 .amp{color:#e8894a} h1 .c{color:#f2a66f}
+.sub{font-size:36px;color:#c8d0d4;margin-top:28px;line-height:1.35}
+.sub b{color:#fff}
+.stage{position:relative;height:810px;margin:34px -84px 0}
+.phone{position:absolute;left:315px;top:10px;width:420px;height:770px;border-radius:58px;background:#05080a;border:3px solid #34444c;padding:14px;
+ box-shadow:0 40px 110px rgba(0,0,0,.65),0 0 0 9px rgba(255,255,255,.03);transform:rotate(-2deg);z-index:2}
+.phone .scr{width:100%;height:100%;border-radius:44px;overflow:hidden;background:#0b1115;padding-top:44px}
+.phone img{display:block;width:100%}
+.notch{position:absolute;left:50%;top:24px;width:120px;height:32px;margin-left:-60px;border-radius:18px;background:#05080a;z-index:2}
+.float{position:absolute;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.12);box-shadow:0 26px 70px rgba(0,0,0,.7);z-index:4;background:#0b1115}
+.float img{display:block;width:100%}
+.tag{position:absolute;z-index:6;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700;letter-spacing:.08em;padding:8px 15px;border-radius:11px;background:#0a0d10;border:2px solid #2dd4bf;color:#2dd4bf}
+.tag.cu{border-color:#e8894a;color:#f2a66f}
+.fA{left:46px;top:268px;width:380px;transform:rotate(-3deg)}   .tA{left:62px;top:238px;transform:rotate(-3deg)}
+.fB{left:655px;top:250px;width:380px;transform:rotate(2.5deg);border-color:rgba(232,137,74,.6)} .tB{left:695px;top:218px;transform:rotate(2.5deg)}
+.fC{left:44px;top:575px;width:400px;transform:rotate(-2deg)}  .tC{left:60px;top:545px;transform:rotate(-2deg)}
+.fD{left:640px;top:570px;width:400px;transform:rotate(2deg)}  .tD{left:670px;top:538px;transform:rotate(2deg)}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;margin-top:40px;text-align:left;position:relative;z-index:5}
+.feat div{display:flex;align-items:center;gap:14px;font-size:26px;font-weight:600;color:#e6eaec;line-height:1.2;white-space:nowrap}
+.feat i{flex:none;width:34px;height:34px;border-radius:9px;background:rgba(45,212,191,.16);border:2.5px solid #2dd4bf;position:relative}
+.feat i:after{content:"";position:absolute;left:9px;top:3px;width:9px;height:16px;border:solid #2dd4bf;border-width:0 4px 4px 0;transform:rotate(45deg)}
+.feat i.cu{background:rgba(232,137,74,.16);border-color:#e8894a}.feat i.cu:after{border-color:#f2a66f}
+.pills{display:flex;gap:16px;margin-top:40px;justify-content:center}
+.pill{font-size:31px;font-weight:700;padding:14px 28px;border-radius:999px;border:2px solid #e8894a;background:rgba(232,137,74,.15)}
+.pill.t{border-color:#14b8a6;background:rgba(45,212,191,.12)}
+.url{position:absolute;left:0;right:0;bottom:70px;font-family:'JetBrains Mono',monospace;font-size:29px;color:#7f8e96}
+</style></head><body><div class="card">
+ <div class="eyebrow">TEAM KORI · SHOP TOOL</div>
+ <h1>Drill <span class="amp">&amp;</span> Tap<br><span class="c">Calculator</span></h1>
+ <div class="sub">Tap drill + % thread for <b>195 sizes</b><br>inch · metric · pipe · NPS</div>
+ <div class="stage">
+  <div class="phone"><div class="notch"></div><div class="scr"><img src="crop-appTop.png"><img src="crop-hole.png"></div></div>
+  <div class="float fA"><img src="crop-codeTap.png"></div><div class="tag tA">RIGID TAP · M29 / G84</div>
+  <div class="float fB"><img src="crop-insPick.png"></div><div class="tag cu tB">STI · PICK YOUR CHART</div>
+  <div class="float fC"><img src="crop-codeDrill.png"></div><div class="tag tC">G81 · G73 · G83 BY DEPTH</div>
+  <div class="float fD"><img src="crop-tsCard.png"></div><div class="tag tD">TROUBLESHOOT · LIVE</div>
+ </div>
+ <div class="feat">
+  <div><i></i>2B / 3B / 6H class checks</div>
+  <div><i></i>Speeds &amp; feeds by hardness</div>
+  <div><i></i>Blind-hole Tap Z &amp; Drill Z</div>
+  <div><i></i>Fanuc code, copy &amp; go</div>
+  <div><i></i>Troubleshoot reads your setup</div>
+  <div><i class="cu"></i>Heli-Coil · Recoil · Emuge</div>
+  <div><i></i>Every number sourced</div>
+  <div><i></i>Inch &amp; mm, one tap</div>
+ </div>
+ <div class="pills"><div class="pill">Free</div><div class="pill t">Works offline on your phone</div><div class="pill">No account</div></div>
+ <div class="url">korianna71.github.io/team-kori-drill-tap</div>
+</div></body></html>
