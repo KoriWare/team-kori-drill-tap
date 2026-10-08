@@ -174,3 +174,9 @@ header h1 span{color:var(--cu2)}
 .ro .vin input:focus{border-bottom-color:var(--teal)}
 .ro .vin input:disabled{border-bottom-color:transparent;color:var(--dim)}
 .ro .vin small{font-size:12px;color:var(--dim);flex:none}
+/* wide screens (PC): tap + drill side by side */
+@media (min-width:1000px){
+  .wrap{max-width:1120px}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .hero svg#xsec{display:block;max-width:620px;margin:0 auto}
+}
