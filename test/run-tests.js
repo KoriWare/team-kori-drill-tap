@@ -456,4 +456,18 @@ t("Harvey Tool second source: cited only where its printed number sits inside th
   assert.strictEqual(ti.sfm, 50); assert.strictEqual(ti.sfmHi, 100); assert(Math.abs(ti.ipr - 0.0015) < 1e-12 && Math.abs(ti.iprHi - 0.002) < 1e-12);
   assert(/harveyperformance\.widen\.net\/content\/ss7jrgaq3k\/pdf\/SF_20000\.pdf$/.test(H.url));
 });
+t("STI code comments are Fanuc-safe: one ( ) pair, no quotes, ASCII only, every size/chart/unit", () => {
+  let k = 0;
+  for (const x of D.THREAD_LIST) for (const u of ["in", "mm"]) for (const ch of ["HC", "RC", "EM"]) {
+    const d = C.sti(C.findThread(x.id), { units: u, hole: "blind", chamf: "plug", pt: 118, insLen: 1.5, stiChart: ch });
+    if (!d) continue;
+    for (const r of d.lengths) for (const line of r.code) {
+      assert(/^[\x20-\x7E]*$/.test(line), "non-ASCII in " + line);
+      assert(line.indexOf('"') < 0, "quote in " + line);
+      assert((line.match(/\(/g) || []).length === (line.match(/\)/g) || []).length && (line.match(/\(/g) || []).length <= 1, "nested parens in " + line);
+      k++;
+    }
+  }
+  assert(k > 500);
+});
 console.log("\n" + n + " tests passed");

@@ -842,7 +842,9 @@
     const code1 = (h) => {
       const z = zWord(h.tapZ, units), rpm = opts.rpm > 0 ? opts.rpm : S.stiRpm > 0 ? S.stiRpm : 0;
       const pTxt = units === "mm" ? (P * IN_MM).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") + " mm" : P.toFixed(5).replace(/0+$/, "").replace(/^0/, "") + '"';
-      const head = "(" + tap.label + " " + h.x + "xD, F = S x " + pTxt + ")";
+      // Fanuc-safe comment: no nested ( ), no " and ASCII only, so the control doesn't alarm or end the comment early.
+      const fc = (x) => String(x).replace(/×/g, "X").replace(/[()]/g, " ").replace(/"/g, " IN").replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim().toUpperCase();
+      const head = "(" + fc(tap.label + " " + h.x + "XD, F = S X " + pTxt) + ")";
       if (rpm > 0) { const fb = fanucBlock(Math.round(rpm), t, units, h.tapZ); return [head].concat(fb.lines); }
       return [head, units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S?", "G84 X? Y? " + z + " R? F?", "G80"];
     };
