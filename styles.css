@@ -310,3 +310,5 @@ body.is-ins .ins-t b{color:var(--cu2)}
 .ins-chart button b{font:600 12.5px var(--sans)}
 .ins-chart button small{font:600 11px var(--mono);color:var(--dim)}
 .ins-chart button.on small{color:var(--cu2)}
+.ins-fill{font:600 9.5px var(--sans);font-style:normal;letter-spacing:.04em;text-transform:none;color:var(--cu2);border:1px solid rgba(232,137,74,.55);border-radius:6px;padding:0 4px;margin-left:4px;vertical-align:1px}
+.ins-fillnote{margin:8px 0 0;font:12px/1.4 var(--sans);color:var(--cu2)}

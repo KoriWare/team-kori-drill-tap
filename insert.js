@@ -106,8 +106,12 @@
     $("ins-len").innerHTML = rows.map((r) => '<button type="button" data-x="' + r.x + '" aria-pressed="' + (r.x === lenX) + '"' + (r.x === lenX ? ' class="on cu"' : "") + ">" + r.x + "×D</button>").join("");
     const row = rows.find((r) => r.x === lenX) || rows[1];
     $("ins-z").innerHTML = drawIns(t, d, row);
-    $("ins-tbl").innerHTML = '<div class="r h"><span>Length</span><span>Hole depth</span><span>Tap Z</span></div>' +
+    // d.fill (Jenny): { field: "HC" } for numbers borrowed from another chart because the picked chart doesn't list them.
+    const fill = (d && d.fill) || {}, ftag = (k) => fill[k] ? ' <i class="ins-fill" title="The picked chart doesn\'t list this, so it comes from ' + esc(CHART_NAME[fill[k]] || fill[k]) + '">' + esc(CHART_NAME[fill[k]] || fill[k]) + "</i>" : "";
+    $("ins-tbl").innerHTML = '<div class="r h"><span>Length</span><span>Hole depth' + ftag("holeIn") + "</span><span>Tap Z" + ftag("tapZIn") + "</span></div>" +
       rows.map((r) => '<div class="r' + (r.x === lenX ? " on" : "") + '"><span><b>' + r.x + "×D</b> " + fmt(r.lenIn, units) + "</span><span>" + fmt(r.holeIn, units) + "</span><span>" + (r.tapZIn > 0 ? "Z-" + (units === "mm" ? (r.tapZIn * 25.4).toFixed(3) : r.tapZIn.toFixed(4)) : "—") + "</span></div>").join("");
+    const fk = Object.keys(fill), fn = $("ins-fillnote");
+    if (fn) { fn.hidden = !fk.length; fn.textContent = fk.length ? "Some numbers below come from " + Array.from(new Set(fk.map((k) => CHART_NAME[fill[k]] || fill[k]))).join(" and ") + " because the " + (CHART_NAME[chart] || chart) + " chart doesn't list them" + (fill.sink ? ", including the countersink" : "") + ". They're tagged in copper." : ""; }
     const rc = d && row && row.code ? row.code : d && d.code; $("ins-code").innerHTML = rc ? rc.map((l) => esc(l).replace(/^(M29|G84|G80|G2[01])/, '<span class="k">$1</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>") : '<span class="dimc">STI tap code arrives with the sizes. It uses the same amber ? spots as the tap cycle.</span>';
     $("ins-steps").innerHTML = (d && d.install ? d.install : SAMPLE_STEPS).map((x) => "<li>" + esc(x) + "</li>").join("");
     const src = d && d.src ? d.src : [];
