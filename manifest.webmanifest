@@ -1,0 +1,13 @@
+{
+  "name": "Drill & Tap · Team Kori",
+  "short_name": "Drill & Tap",
+  "description": "Tap drill, % thread, rigid tap and drill speeds & feeds for CNC machinists. Starting points only.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0e11",
+  "theme_color": "#0a0e11",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

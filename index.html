@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Team Kori shop tool — tap drill sizes, % thread, rigid tap feed and drill speeds & feeds. Starting points only." />
+  <meta name="theme-color" content="#0a0e11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
+  <title>Drill &amp; Tap · Team Kori</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" /><!-- PLACEHOLDER: Maria to supply apple-touch-icon.png -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to calculator</a>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 1v12M6 4h8M6 7h8M6 10h8" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round"/><path d="M10 13l-2.5 5h5z" fill="#e8894a"/></svg></div>
+    <h1>Drill <span>&amp;</span> Tap</h1>
+    <div class="units" role="group" aria-label="Length units">
+      <button type="button" id="u-in" class="on" aria-pressed="true">in</button><span class="sep">|</span><button type="button" id="u-mm" aria-pressed="false">mm</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HELP -->
+    <section class="panel help">
+      <details class="acc">
+        <summary><span class="lbl">? Help · how to use</span></summary>
+        <p><b>1. Pick a thread.</b> The most-used sizes are pinned at the top; every UNC, UNF, UNEF, ISO metric, NPT, BSPT and BSPP size is below, grouped by series.</p>
+        <p><b>2. Cut or form tap.</b> A cut tap cuts the thread out. A form tap pushes the metal into shape (no chips), so it needs a <b>bigger</b> drill. Default % thread: 75% cut, 65% form. You can type 50–100%.</p>
+        <p><b>3. Read the drill.</b> You get the exact drill size, the nearest standard drills just under and just over (fraction / number / letter and metric), and the real % thread each one gives.</p>
+        <ul>
+          <li><b>Green</b> = good. <b>Amber</b> = check it (shallow thread, or a pipe thread that uses a table drill). <b>Red</b> = high torque, the tap may snap.</li>
+          <li>More than ~75% thread barely adds strength but adds a lot of tap torque.</li>
+          <li><b>Pipe threads</b> (NPT, BSPT, BSPP) don't use the % formula. The app shows the published table drill. Tapered threads: check depth with an L1 plug gauge.</li>
+        </ul>
+        <p><b>4. Speeds &amp; feeds.</b> Set the work material and its hardness once (HB or HRC). The tap panel gives RPM and the rigid-tap feed (feed = RPM × pitch, exactly) and a Fanuc G84 block. The drill panel gives SFM, RPM, IPR, IPM and a peck plan.</p>
+        <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
+        <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
+        <p><b>DEMO $</b> (gold, bottom) uses sample costs only — change them to your shop's numbers.</p>
+      </details>
+    </section>
+
+    <!-- THREAD -->
+    <section class="panel" aria-labelledby="thread-lbl">
+      <div class="lbl" id="thread-lbl">Thread</div>
+      <div class="row">
+        <label class="field" style="flex:2"><div class="lbl">Size</div><select id="thread"></select></label>
+        <label class="field" id="pct-field"><div class="lbl">% Thread</div><input id="pct" type="number" inputmode="decimal" min="50" max="100" step="1" value="75" /></label>
+      </div>
+      <div class="seg" role="group" aria-label="Tap type">
+        <button type="button" id="tt-cut" class="on cu" aria-pressed="true">Cut tap</button>
+        <button type="button" id="tt-form" aria-pressed="false">Form tap</button>
+      </div>
+    </section>
+
+    <!-- HOLE / TAP DRILL -->
+    <section class="panel hero" aria-labelledby="xs-lbl">
+      <div class="lbl" id="xs-lbl">Hole cross-section · live</div>
+      <svg id="xsec" viewBox="0 0 358 240" role="img" aria-label="Hole cross-section"></svg>
+      <div class="readouts">
+        <div class="ro c"><div class="lbl">Tap drill</div><div class="v" id="r-drill">—</div><div class="s" id="r-drill-s"></div></div>
+        <div class="ro t"><div class="lbl" id="r-pct-lbl">Actual thread</div><div class="v" id="r-pct">—</div><div class="s" id="r-pct-s"></div></div>
+      </div>
+      <div class="chip" id="r-chip"><i></i><span>—</span></div>
+      <div id="r-info"></div>
+      <table class="opts" id="r-opts" aria-label="Nearest standard drills"></table>
+    </section>
+
+    <!-- WORK MATERIAL (shared) -->
+    <section class="panel" aria-labelledby="mat-lbl">
+      <div class="lbl" id="mat-lbl">Work material</div>
+      <div class="row">
+        <label class="field" style="flex:2"><div class="lbl">Material</div><select id="mat"></select></label>
+        <div class="field">
+          <label class="lbl" for="hard">Hardness</label>
+          <input id="hard" type="number" inputmode="decimal" step="1" />
+          <div class="seg sm" role="group" aria-label="Hardness scale">
+            <button type="button" id="h-hb" class="on" aria-pressed="true">HB</button><button type="button" id="h-hrc" aria-pressed="false">HRC</button>
+          </div>
+        </div>
+      </div>
+      <div class="info" id="hard-note"></div>
+    </section>
+
+    <!-- RIGID TAP -->
+    <section class="panel" aria-labelledby="tap-lbl">
+      <div class="lbl" id="tap-lbl">Rigid tap · Fanuc</div>
+      <div class="row">
+        <label class="field" style="flex:2"><div class="lbl">Tap material</div><select id="tapmat"></select></label>
+        <label class="field"><div class="lbl" id="tap-ov-lbl">Own SFM</div><input id="tap-ov" type="number" inputmode="decimal" min="0" placeholder="auto" /></label>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="lbl">Spindle</div><div class="v" id="t-rpm">—</div><div class="s" id="t-rpm-s"></div></div>
+        <div class="ro t"><div class="lbl">Feed = RPM × pitch</div><div class="v" id="t-feed">—</div><div class="s" id="t-feed-s"></div></div>
+      </div>
+      <div class="code" id="t-code">—</div>
+      <div id="t-info"></div>
+    </section>
+
+    <!-- DRILL -->
+    <section class="panel" aria-labelledby="drl-lbl">
+      <div class="lbl" id="drl-lbl">Drill · speeds &amp; feeds</div>
+      <div class="row">
+        <label class="field" style="flex:2"><div class="lbl">Drill material</div><select id="drillmat"></select></label>
+      </div>
+      <div class="row">
+        <label class="field"><div class="lbl" id="d-dia-lbl">Drill Ø (in)</div><input id="d-dia" type="number" inputmode="decimal" min="0" step="any" /><div class="hint"><input type="checkbox" id="d-link" checked /> = tap drill</div></label>
+        <label class="field"><div class="lbl" id="d-depth-lbl">Hole depth (in)</div><input id="d-depth" type="number" inputmode="decimal" min="0" step="any" /></label>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="lbl" id="d-sfm-lbl">SFM</div><div class="v" id="d-sfm">—</div><div class="s" id="d-sfm-s"></div></div>
+        <div class="ro"><div class="lbl">Spindle</div><div class="v" id="d-rpm">—</div><div class="s" id="d-rpm-s"></div></div>
+        <div class="ro"><div class="lbl" id="d-ipr-lbl">Feed / rev</div><div class="v" id="d-ipr">—</div><div class="s" id="d-ipr-s"></div></div>
+        <div class="ro t"><div class="lbl" id="d-ipm-lbl">Feed / min</div><div class="v" id="d-ipm">—</div><div class="s" id="d-ipm-s"></div></div>
+      </div>
+      <div class="chip" id="d-chip"><i></i><span>—</span></div>
+      <div id="d-info"></div>
+    </section>
+
+    <!-- CONVERT -->
+    <section class="panel conv">
+      <details class="acc">
+        <summary><span class="lbl">Convert</span></summary>
+        <div class="sub" id="cv1-lbl">SFM ↔ RPM</div>
+        <div class="row">
+          <label class="field"><div class="lbl" id="cv-d-lbl">Ø in</div><input id="cv-d" type="number" inputmode="decimal" step="any" value="0.5" /></label>
+          <label class="field"><div class="lbl" id="cv-sfm-lbl">SFM</div><input id="cv-sfm" type="number" inputmode="decimal" step="any" value="100" /></label>
+          <label class="field"><div class="lbl">RPM</div><input id="cv-rpm" type="number" inputmode="decimal" step="any" /></label>
+        </div>
+        <div class="sub" id="cv2-lbl">IPR ↔ IPM</div>
+        <div class="row">
+          <label class="field"><div class="lbl">RPM</div><input id="cv-rpm2" type="number" inputmode="decimal" step="any" value="1000" /></label>
+          <label class="field"><div class="lbl" id="cv-ipr-lbl">IPR</div><input id="cv-ipr" type="number" inputmode="decimal" step="any" value="0.005" /></label>
+          <label class="field"><div class="lbl" id="cv-ipm-lbl">IPM</div><input id="cv-ipm" type="number" inputmode="decimal" step="any" /></label>
+        </div>
+        <div class="sub">in ↔ mm</div>
+        <div class="row">
+          <label class="field"><div class="lbl">in</div><input id="cv-in" type="number" inputmode="decimal" step="any" value="0.25" /></label>
+          <span class="eq">=</span>
+          <label class="field"><div class="lbl">mm</div><input id="cv-mm" type="number" inputmode="decimal" step="any" /></label>
+        </div>
+      </details>
+    </section>
+
+    <!-- DEMO $ -->
+    <section class="panel demo" aria-labelledby="demo-lbl">
+      <div class="hd">
+        <div class="lbl" id="demo-lbl">DEMO $ · broken tap</div>
+        <label class="toggle"><input type="checkbox" id="demo-on" checked /> show</label>
+      </div>
+      <div id="demo-body">
+        <div class="info">Sample numbers only (Stacey's DEMO). Type your shop's real costs.</div>
+        <div class="row">
+          <label class="field"><div class="lbl">Part value $</div><input id="c-part" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field"><div class="lbl">Lost time min</div><input id="c-min" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field"><div class="lbl">Shop rate $/hr</div><input id="c-rate" type="number" inputmode="decimal" min="0" step="any" /></label>
+        </div>
+        <div class="row">
+          <label class="field"><div class="lbl">Taps snapped</div><input id="c-n" type="number" inputmode="numeric" min="0" step="1" /></label>
+          <div class="ro" style="flex:2"><div class="lbl" id="c-snap-lbl">Snapped tap cost</div><div class="v" id="c-snap" style="color:var(--gold)">—</div></div>
+        </div>
+        <div class="sub">Per 1,000 holes · cut vs form</div>
+        <div class="cmp">
+          <div>
+            <div class="lbl" style="margin-top:6px">Cut tap</div>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Tap $</div><input id="c-cut-cost" type="number" inputmode="decimal" min="0" step="any" /></label>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / tap (wear)</div><input id="c-cut-life" type="number" inputmode="numeric" min="1" step="1" /></label>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / break</div><input id="c-cut-brk" type="number" inputmode="numeric" min="1" step="1" /></label>
+          </div>
+          <div>
+            <div class="lbl" style="margin-top:6px">Form tap</div>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Tap $</div><input id="c-form-cost" type="number" inputmode="decimal" min="0" step="any" /></label>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / tap (wear)</div><input id="c-form-life" type="number" inputmode="numeric" min="1" step="1" /></label>
+            <label class="field" style="display:block;margin-top:6px"><div class="lbl">Holes / break</div><input id="c-form-brk" type="number" inputmode="numeric" min="1" step="1" /></label>
+          </div>
+          <div class="ro" id="c-cut-out"><div class="lbl">Cut · total</div><div class="v" id="c-cut-tot">—</div><div class="line"><span>wear</span><span id="c-cut-wear">—</span></div><div class="line"><span>breaks</span><span id="c-cut-breaks">—</span></div></div>
+          <div class="ro" id="c-form-out"><div class="lbl">Form · total</div><div class="v" id="c-form-tot">—</div><div class="line"><span>wear</span><span id="c-form-wear">—</span></div><div class="line"><span>breaks</span><span id="c-form-breaks">—</span></div></div>
+        </div>
+        <div class="info" id="c-verdict"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Team Kori · Shop Tools · Starting points only — always check your tool maker's chart.</footer>
+</div>
+<script src="data.js"></script>
+<script src="calc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
