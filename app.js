@@ -18,7 +18,14 @@
     scale: store.get(LS.scale, "HB"),
     dDiaIn: 0.201, dLinked: true, depthIn: 0.375,
     cls: store.get("dt-cls", "2B"), hole: "blind", chamf: "plug", pt: 118,
+    tapStyle: store.get("dt-tstyle", "spiralFlute"), holder: store.get("dt-holder", "rigid"),
   };
+  const TAP_STYLES = ["spiralFlute", "spiralPoint", "straight"], HOLDERS = ["rigid", "synchro", "tensionComp"];
+  if (TAP_STYLES.indexOf(S.tapStyle) < 0) S.tapStyle = "spiralFlute";
+  if (HOLDERS.indexOf(S.holder) < 0) S.holder = "rigid";
+  // Troubleshoot check context (Jenny): each render fills its part, emitChange() snapshots it into DT_STATE.tc.
+  // Lengths in inches, speeds in SFM, whatever the display units. See DT_CALC.troubleChecks.
+  const TC = {};
 
   // ------------------------------------------------------------ formatting
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -334,6 +341,7 @@
     if (t.pipe) {
       const r = C.tapDrill(t, S.tapType, 0, S.units);
       lastRec = r.rec;
+      Object.assign(TC, { thread: t, pipe: true, pct: null, pctLimit: null, drillIn: r.rec.dIn, majorIn: C.majorIn(t), cls: null, classCheckLevel: null, classCheck: null });
       $("r-drill").innerHTML = esc(r.rec.label) + " <small>" + esc(len(r.rec.dIn)) + "</small>";
       $("r-drill-s").textContent = "table drill · " + r.standard;
       $("r-pct-lbl").textContent = "Thread type";
@@ -365,6 +373,7 @@
     const r = C.tapDrill(t, S.tapType, pct, S.units);
     const rec = r.rec;
     lastRec = rec;
+    Object.assign(TC, { thread: t, pipe: false, pct: rec ? rec.pct : null, pctLimit: C.PCT_LIMIT[S.tapType], drillIn: rec ? rec.dIn : r.exactIn, majorIn: C.majorIn(t) });
     if (rec) {
       $("r-drill").innerHTML = esc(rec.label) + " <small>" + esc(len(rec.dIn)) + "</small>";
       $("r-pct").innerHTML = rec.pct.toFixed(1) + "<small>%</small>";
@@ -412,11 +421,13 @@
     }
     const lim = C.minorLimits(t, cls);
     $("cls-row").hidden = !lim; $("cls-info").hidden = !lim; $("cls-src").hidden = !lim;
+    Object.assign(TC, { cls: lim ? lim.cls : null, classCheckLevel: null, classCheck: null });
     if (!lim) return null;
     infoLines($("cls-src"), [{ html: "<b>Sources:</b> " + esc(inch
       ? "ASME B1.1-2019 Unified Inch Screw Threads, internal minor Ø limit formulas (checked against published 2B / 3B tables)"
       : "ISO 965-1:2013 metric thread tolerances, TD1 minor Ø tolerance table") }]);
     const chk = C.classCheck(lim, drillIn, S.tapType);
+    if (chk) Object.assign(TC, { classCheckLevel: chk.level, classCheck: chk.text });
     setChip($("cls-chip"), chk.level, chk.text);
     const rng = S.units === "mm" || !inch ? (lim.minIn * IN_MM).toFixed(3) + "–" + (lim.maxIn * IN_MM).toFixed(3) + " mm" : dec(lim.minIn, 4) + "–" + dec(lim.maxIn, 4) + '"';
     let txt = "Minor Ø " + lim.cls + " " + rng + "." + (S.tapType === "cut" ? " Green band in the drawing." : "");
@@ -454,13 +465,13 @@
     $("zstack").innerHTML = S.depthIn > 0 ? drawZ(h, t, taper) : "";
     $("zstack").style.display = S.depthIn > 0 ? "" : "none";
     $("z-drill-s").textContent = S.hole === "blind"
-      ? "tap Z + 1P " + b(h.clearIn) + " + point " + b(h.pointIn)
+      ? "tap Z + " + (h.clearByPitch ? "1P " : "min ") + b(h.clearIn) + " + point " + b(h.pointIn)
       : "thick + breakout " + b(h.breakIn) + " + point " + b(h.pointIn);
     const lines = [S.hole === "blind"
-      ? "Blind: tap Z = thread depth + chamfer (" + D_CH[S.chamf] + " threads). Drill full Ø one pitch deeper, plus the " + S.pt + "° point."
+      ? "Blind: tap Z = thread depth + chamfer (" + D_CH[S.chamf] + " threads). Drill full Ø one pitch deeper (at least " + len(C.BLIND_CLEAR_MIN_IN) + ", Haas), plus the " + S.pt + "° point."
       : "Through: tap past the bottom by the chamfer plus one pitch. Drill breaks out " + b(h.breakIn) + " plus the point."];
     if (S.depthIn <= 0) lines.push({ c: "warn", t: "Enter a depth above 0 to fill Z." });
-    lines.push({ html: "<b>Sources:</b> " + esc("Tap chamfer lengths: Kennametal tap technical data and MSC High Performance Taps guide (taper 7–10, plug 3–5, bottoming 1–2 threads; the app uses 8 / 4 / 2) · drill point length = Ø ÷ (2 × tan(point angle ÷ 2)), cone geometry. The one-pitch clearance and 0.020\" breakout are rules of thumb, not a standard.") });
+    lines.push({ html: "<b>Sources:</b> " + esc("Tap chamfer lengths: Kennametal tap technical data and MSC High Performance Taps guide (taper 7–10, plug 3–5, bottoming 1–2 threads; the app uses 8 / 4 / 2) · drill point length = Ø ÷ (2 × tan(point angle ÷ 2)), cone geometry. Blind-hole clearance below the tap: one pitch (shop rule of thumb) but never under .050\" / 1.27 mm (Haas TG0144 tap breakage guide: drill at least .050\" deeper than the tap goes). The 0.020\" through-hole breakout is a rule of thumb, not a standard.") });
     infoLines($("z-info"), lines);
   }
   const D_CH = { bottoming: "~2", plug: "~4", taper: "~8" };
@@ -500,6 +511,11 @@
     let ov = S.tapOwn ? num(inp) : 0;
     ov = ov > 0 ? (mmU ? ov * D.M_TO_SFM : ov) : 0;
     const ts = C.tapStart($("mat").value, S.tapType, $("tapmat").value, h, t, ov);
+    // Published range + blocked status even when the user typed their own speed (an override skips both).
+    const pub = ov > 0 ? C.tapStart($("mat").value, S.tapType, $("tapmat").value, h, t, 0) : ts;
+    Object.assign(TC, { tapOwn: !!ts.override, tapSfm: ts.ok ? ts.sfm : null, tapSfmHi: pub.ok ? pub.sfmHi : null,
+      tsBlocked: !!(ts.blocked || pub.blocked), tsReason: ts.reason || pub.reason || null, fanucExact: null, fanucLines: null });
+    tstyHint();
     // Show the calculated speed in the box until the user types their own.
     if (!S.tapOwn && document.activeElement !== inp) inp.value = ts.ok && ts.sfm > 0 ? Math.round(mmU ? ts.sfm / D.M_TO_SFM : ts.sfm) : "";
     tapHint();
@@ -510,6 +526,7 @@
       return;
     }
     const fb = C.fanucBlock(ts.rpm, t, S.units, S.depthIn > 0 ? tapZ() : 0);
+    Object.assign(TC, { fanucExact: fb.exact, fanucLines: fb.lines.slice() });
     $("t-rpm").innerHTML = ts.rpm + " <small>rpm</small>";
     $("t-rpm-s").textContent = ts.override ? "your speed" : "up to " + ts.rpmHi + " rpm published";
     $("t-feed").innerHTML = (S.units === "mm" ? fb.feed.toFixed(1) : fb.feed.toFixed(2)) + " <small>" + (S.units === "mm" ? "mm/min" : "ipm") + "</small>";
@@ -563,6 +580,8 @@
     const dz = S.depthIn > 0 ? hole().drillZ : 0;
     const ds = C.drillStart($("mat").value, $("drillmat").value, hb(), S.dDiaIn, dz);
     const mm = S.units === "mm";
+    Object.assign(TC, { dsBlocked: !!ds.blocked, dsReason: ds.reason || null, dsDerated: !!ds.derated, dsNotes: (ds.notes || []).slice(),
+      drillSfm: null, drillSfmHi: null, drillIpr: null, drillIprHi: null, drillIprLo: null, drillOwnIpr: false, ld: null, peckText: null, peckCycle: null });
     $("d-sfm-u").textContent = mm ? "m/min" : "SFM"; $("d-ipr-u").textContent = mm ? "mm/rev" : "ipr";
     const edIds = ["d-sfm", "d-rpm", "d-ipr"];
     if (!ds.ok) {
@@ -589,6 +608,8 @@
     $("d-ipm-s").textContent = o || ownIpr ? "rpm × feed/rev" : "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
     setChip($("d-chip"), ds.peck.level, ds.peck.text.split(":")[0].split(".")[0]);
     const db = C.drillBlock(e, S.units, dz);
+    Object.assign(TC, { drillSfm: e.sfm, drillSfmHi: ds.sfmHi, drillIpr: e.ipr, drillIprHi: ds.iprHi, drillIprLo: ds.ipr, drillOwnIpr: ownIpr,
+      ld: ds.ld, peckText: ds.peck.text, peckCycle: db.cycle });
     $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>");
     const lines = [{ c: ds.peck.level === "green" ? "" : ds.peck.level === "amber" ? "warn" : "bad", t: ds.peck.text + (ds.peck.q ? " Q = " + len(ds.peck.q) + "." : "") }];
     lines.push((dz > 0 ? "Z is filled from Hole depth, drill point included. Replace each amber ? with X Y and R." : "Replace each amber ? with X Y (hole position), Z (depth incl. drill point) and R (retract plane).") + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
@@ -644,7 +665,10 @@
     clearTimeout(emitT);
     emitT = setTimeout(() => {
       const t = curThread();
-      window.DT_STATE = { S: JSON.parse(JSON.stringify(S)), thread: t, hole: hole(), rec: lastRec, tapCode: $("t-code").innerText, drillCode: $("d-code").innerText };
+      const h = hole(), taper = t.pipe && t.type === "taper", mat = C.material($("mat").value);
+      const tc = Object.assign({}, TC, { units: S.units, tapType: S.tapType, hole: S.hole, depthIn: S.depthIn, pitchIn: C.pitchIn(t),
+        tapZ: taper ? 0 : h.tapZ, drillFull: h.drillFull, chamf: S.chamf, pt: S.pt, tapStyle: S.tapStyle, holder: S.holder, matIso: mat ? mat.iso : null });
+      window.DT_STATE = { S: JSON.parse(JSON.stringify(S)), thread: t, hole: h, rec: lastRec, tapCode: $("t-code").innerText, drillCode: $("d-code").innerText, tc };
       document.dispatchEvent(new CustomEvent("dt:change", { detail: window.DT_STATE }));
     }, 30);
   }
@@ -675,9 +699,27 @@
     cvSpeed("sfm"); cvFeed("ipr");
   }
 
+  // ------------------------------------------------------------ tap style + holder (troubleshoot checks use them)
+  const TSTY_TXT = { spiralFlute: "Spiral flute lifts chips out: the pick for blind holes.", spiralPoint: "Spiral point pushes chips ahead: through holes only.", straight: "Straight flute: short-chipping work (cast iron) and shallow holes." };
+  function tstyHint() {
+    const el = $("tsty-hint"); if (!el) return;
+    if (S.tapType === "form") { el.textContent = "Form tap: no flutes, no chips."; el.className = "hint"; return; }
+    const bad = S.hole === "blind" && S.tapStyle === "spiralPoint";
+    el.textContent = bad ? "Spiral point in a blind hole packs chips at the bottom. Use spiral flute." : TSTY_TXT[S.tapStyle];
+    el.className = "hint" + (bad ? " bad" : "");
+  }
+  function segPick(segId, attr, val) {
+    const seg = $(segId), btns = Array.from(seg.querySelectorAll("[data-" + attr + "]"));
+    const on = btns.find((b) => b.dataset[attr] === val);
+    if (on) segSet(on, btns.filter((b) => b !== on));
+  }
+  function setTapStyle(v) { S.tapStyle = v; store.set("dt-tstyle", v); segPick("tsty-seg", "tsty", v); renderTap(); }
+  function setHolder(v) { S.holder = v; store.set("dt-holder", v); segPick("hold-seg", "hold", v); renderTap(); }
+
   // ------------------------------------------------------------ events
   function setTapType(tt) {
     S.tapType = tt;
+    $("tsty-seg").hidden = tt === "form";
     segSet(tt === "cut" ? $("tt-cut") : $("tt-form"), [tt === "cut" ? $("tt-form") : $("tt-cut")], tt === "cut" ? "cu" : null);
     $("pct").value = S.pct[tt];
     renderAll();
@@ -722,7 +764,10 @@
     $("mat").onchange = () => { setHardFromHB(C.material($("mat").value).defaultHB); $("hard-note").textContent = hardNote(); renderAll(); };
     $("hard").oninput = () => { $("hard-note").textContent = hardNote(); renderAll(); };
     document.querySelectorAll(".copybtn").forEach((b) => { b.onclick = () => copyCode(b); });
-    $("tapmat").onchange = renderTap; $("tap-ov").oninput = tapOwnInput; $("tap-ov").onblur = renderTap;
+    $("tapmat").onchange = renderTap;
+    segPick("tsty-seg", "tsty", S.tapStyle); segPick("hold-seg", "hold", S.holder);
+    $("tsty-seg").onclick = (e) => { const b = e.target.closest("[data-tsty]"); if (b) setTapStyle(b.dataset.tsty); };
+    $("hold-seg").onclick = (e) => { const b = e.target.closest("[data-hold]"); if (b) setHolder(b.dataset.hold); }; $("tap-ov").oninput = tapOwnInput; $("tap-ov").onblur = renderTap;
     $("tap-ov-hint").onclick = (e) => { if (!e.target.closest("#tap-ov-reset")) return; e.preventDefault(); S.tapOwn = false; renderTap(); };
     $("drillmat").onchange = renderDrill;
     $("d-sfm").oninput = () => { const v = num($("d-sfm")); S.dOwnSpeed = v > 0 ? { kind: "sfm", v: S.units === "mm" ? v * D.M_TO_SFM : v } : null; renderDrill(); };
@@ -768,7 +813,7 @@
       if (!e.isTrusted) return;
       if (e.type === "click") {
         const t = e.target;
-        if (!(t.closest && (t.closest(".tp-opt") || t.closest("#tt-cut,#tt-form,#h-hb,#h-hrc,#hole-blind,#hole-thru,#pt-118,#pt-135,#cls-seg")))) return;
+        if (!(t.closest && (t.closest(".tp-opt") || t.closest("#tt-cut,#tt-form,#h-hb,#h-hrc,#hole-blind,#hole-thru,#pt-118,#pt-135,#cls-seg,#tsty-seg,#hold-seg")))) return;
       } else if (e.target && e.target.id === "tp-q") return; // typing in search alone isn't a change
       tag.hidden = true;
       ["input", "change", "click"].forEach((ev) => document.removeEventListener(ev, hide, true));

@@ -422,8 +422,11 @@
   const pointLen = (dIn, deg) => (dIn > 0 && deg > 0 && deg < 180 ? dIn / (2 * Math.tan((deg * Math.PI) / 360)) : 0);
   // Tap chamfer lengths in threads (shop rule of thumb, conservative end):
   const CHAMFER = { bottoming: 2, plug: 4, taper: 8 };
+  // Haas TG0144 tap breakage guide: drill blind holes at least .050" deeper than the tap goes.
+  const BLIND_CLEAR_MIN_IN = (DATA.TROUBLE_RULES && DATA.TROUBLE_RULES.blindClearMinIn) || 0.05;
   /**
-   * Blind: thread depth → tap Z = thread + chamfer; drill full Ø = tap Z + 1 pitch (chip room); drill Z = that + point.
+   * Blind: thread depth → tap Z = thread + chamfer; drill full Ø = tap Z + max(1 pitch, .050") (chip room; Haas TG0144
+ *   wants at least .050" = 1.27 mm below the tap); drill Z = that + point. Kori's rule, Oct 7 2026.
    * Through: thickness → tap Z = thickness + chamfer + 1 pitch; drill Z = thickness + point + small breakout.
    * All depths in inches, positive down from the top of the part.
    */
@@ -433,8 +436,8 @@
       const brk = o.breakIn > 0 ? o.breakIn : 0.02;
       return { mode: "through", chamferIn: ch, pointIn: pt, tapZ: o.depthIn + ch + P, drillFull: o.depthIn + brk, drillZ: o.depthIn + brk + pt, breakIn: brk };
     }
-    const tapZ = o.depthIn + ch, drillFull = tapZ + P;
-    return { mode: "blind", chamferIn: ch, pointIn: pt, tapZ, drillFull, drillZ: drillFull + pt, clearIn: P };
+    const clr = Math.max(P, BLIND_CLEAR_MIN_IN), tapZ = o.depthIn + ch, drillFull = tapZ + clr;
+    return { mode: "blind", chamferIn: ch, pointIn: pt, tapZ, drillFull, drillZ: drillFull + pt, clearIn: clr, clearByPitch: P >= BLIND_CLEAR_MIN_IN };
   }
   // Z word, negative down from Z0 at the top of the part. Inch 4 places, mm 3 (matches Q).
   function zWord(depthIn, units) {
@@ -457,11 +460,174 @@
     return { wear, changes, breaks, total: wear + breaks };
   }
 
+  // ------------------------------------------------------------ troubleshoot checks
+  /**
+   * Next standard drill above drillIn that still works: % thread stays ≥ 50 and, for cut taps,
+   * the drill stays inside the class band (classCheck green). family "in" (fraction/number/letter) or "mm".
+   * Returns { label, dIn, pct } or null. Pure; inches in and out.
+   */
+  function nextDrillUp(t, tapType, drillIn, cls, family) {
+    if (!t || t.pipe || !(drillIn > 0)) return null;
+    const lim = tapType === "cut" ? minorLimits(t, cls) : null;
+    const list = (family === "mm" ? metricList().map((it) => ({ label: it.label, dIn: it.d / IN_MM })) : inchList().map((it) => ({ label: it.label, dIn: it.d })))
+      .filter((o) => o.dIn > drillIn + 1e-6).sort((a, b) => a.dIn - b.dIn);
+    for (const o of list) {
+      const pct = pctFromDrill(t, tapType, inToNative(t, o.dIn));
+      if (pct < PCT_LOW) return null;
+      if (lim) { const c = classCheck(lim, o.dIn, "cut"); if (c.level === "red") return null; if (c.level !== "green") continue; }
+      return { label: o.label, dIn: o.dIn, pct };
+    }
+    return null;
+  }
+
+  /**
+   * Troubleshoot auto-checks (Jenny). Input: a plain ctx object (all lengths in inches, speeds in SFM),
+   * or window.DT_STATE, whose .tc field app.js fills with the same ctx. Missing fields skip their checks.
+   * ctx: { units, thread, tapType, pipe, pct, pctLimit, cls, drillIn, hole, depthIn, majorIn, pitchIn, tapZ, drillFull,
+   *        chamf, pt, tapStyle ('straight'|'spiralPoint'|'spiralFlute'), holder ('rigid'|'synchro'|'tensionComp'), matIso,
+   *        tapOwn, tapSfm, tapSfmHi, tsBlocked, tsReason, classCheckLevel, classCheck, fanucExact, fanucLines,
+   *        drillSfm, drillSfmHi, drillIpr, drillIprHi, drillIprLo, drillOwnIpr, ld, peckText, peckCycle, dsBlocked, dsReason, dsDerated, dsNotes }
+   * Returns [{ id, symptom, level: "live"|"ok", sev: "red"|"amber"|"green", text, you, sourceKey }].
+   * id = Maria's card id (troubledata.js / troubleshoot.json). level is what troubleshoot.js reads; sev keeps red vs amber.
+   */
+  function troubleChecks(input) {
+    const c = input && input.tc ? input.tc : input;
+    if (!c || typeof c !== "object") return [];
+    const R = DATA.TROUBLE_RULES, out = [];
+    const mm = c.units === "mm";
+    const L = (vIn) => (mm ? (vIn * IN_MM).toFixed(2) + " mm" : (Math.abs(vIn) < 1 ? vIn.toFixed(4).replace(/^(-?)0\./, "$1.") : vIn.toFixed(4)) + '"');
+    const SP = (sfm) => (mm ? Math.round(sfm / (DATA.M_TO_SFM || 3.28084)) + " m/min" : Math.round(sfm) + " SFM");
+    const IPR = (v) => (mm ? (v * IN_MM).toFixed(3) + " mm/rev" : v.toFixed(4).replace(/^0\./, ".") + " ipr");
+    const fin = (v) => typeof v === "number" && Number.isFinite(v);
+    const add = (id, sev, text, sourceKey) => out.push({ id, symptom: id.split("-")[0], level: sev === "green" ? "ok" : "live", sev, text, you: text, sourceKey });
+    const many = (ids, sev, text, key) => ids.forEach((id) => add(id, sev, text, key));
+    const cut = c.tapType === "cut", form = c.tapType === "form", thr = !c.pipe && (cut || form);
+    const blind = c.hole === "blind", ratio = fin(c.depthIn) && c.depthIn > 0 && c.majorIn > 0 ? c.depthIn / c.majorIn : NaN;
+
+    // % thread (Haas 75% rule, app breakage limit) + the next drill up that still passes the class.
+    // Amber compares the whole-number % (a 75% target landing on 75.4% with #7 stays green).
+    if (thr && fin(c.pct)) {
+      const lim = fin(c.pctLimit) ? c.pctLimit : PCT_LIMIT[c.tapType], p = c.pct.toFixed(1) + "% thread";
+      let nx = "";
+      if ((cut ? Math.round(c.pct) > R.pctAmberCut : c.pct > lim) && c.thread && c.drillIn > 0) {
+        const n = nextDrillUp(c.thread, c.tapType, c.drillIn, c.cls, mm ? "mm" : "in");
+        if (n) nx = " Next drill up: " + n.label + " (" + L(n.dIn) + ") = " + n.pct.toFixed(1) + "%" + (cut && c.cls ? ", still " + (c.thread.system === "metric" ? "in class" : c.cls) : "") + ".";
+      }
+      if (c.pct > lim) add("broke-1", "red", "You: " + p + ", over the " + lim + "% " + (form ? "form" : "cut") + " tap limit." + nx, "OSG_TAP");
+      else if (cut && Math.round(c.pct) > R.pctAmberCut) add("broke-1", "amber", "You: " + p + ". Over 75% adds torque, not strength." + nx, "HAAS_TAP");
+      else add("broke-1", "green", "You: " + p + " ✓", "OSG_TAP");
+      if (form) add("tight-3", c.pct > lim ? "red" : "amber", c.pct > lim ? "Form tap at " + p + ": pre-drill too small." + nx : "Form tap, " + p + ": check the minor with a go/no-go gauge.", "OSG_TAP");
+    }
+    // Blind hole: holeChain already leaves max(1 pitch, .050") below Tap Z, so app values are always green.
+    // The amber branch only fires for a hand-built ctx with less room than Haas's .050".
+    if (thr && blind && c.tapZ > 0 && c.drillFull > 0) {
+      const gap = c.drillFull - c.tapZ;
+      if (gap < R.blindClearMinIn - 1e-6) add("broke-2", "amber", "Full Ø drill runs only " + L(gap) + " past Tap Z. Haas: at least " + L(R.blindClearMinIn) + ".", "HAAS_TAP");
+      else add("broke-2", "green", "App drills " + L(gap) + " past Tap Z (Haas min " + L(R.blindClearMinIn) + ") ✓", "HAAS_TAP");
+    }
+    // Thread depth vs 1.5 × D
+    if (thr && fin(ratio)) {
+      const r = ratio.toFixed(1) + "×D";
+      if (ratio > R.depthRatio + 1e-9) {
+        add("broke-3", "amber", "Thread " + L(c.depthIn) + " = " + r + " deep. Past 1.5×D adds risk, not strength.", "HAAS_TAP");
+        add("packing-3", "amber", r + " tapped depth: consider peck rigid tapping (Q).", "F_PECK");
+        add("fanuc-6", "amber", r + " tapped depth: G84 with Q = depth per peck.", "F_PECK");
+      } else {
+        add("broke-3", "green", "Thread " + r + " deep ✓", "HAAS_TAP");
+        add("fanuc-6", "green", r + " deep: no peck tapping needed ✓", "F_PECK");
+      }
+    }
+    // Tap style (cut taps only; form taps make no chips)
+    if (cut && !c.pipe && c.tapStyle) {
+      const st = { straight: "Straight flute", spiralPoint: "Spiral point", spiralFlute: "Spiral flute" }[c.tapStyle];
+      if (blind && c.tapStyle === "spiralPoint") {
+        many(["broke-4", "packing-1", "oversize-4", "finish-3"], "red", "Spiral point in a blind hole: chips get pushed down and pack.", "HAAS_TAP");
+      } else if (blind && c.tapStyle === "straight" && fin(ratio) && ratio > R.depthRatio + 1e-9) {
+        many(["broke-4", "oversize-4", "finish-3"], "amber", "Straight flute, blind, " + ratio.toFixed(1) + "×D: chips stay in the hole. Spiral flute is safer.", "OSG_TAP");
+      } else if (st) {
+        many(["broke-4", "oversize-4", "finish-3"], "green", st + " in a " + (blind ? "blind" : "through") + " hole ✓", "HAAS_TAP");
+        if (blind) add("packing-1", "green", st + " in a blind hole ✓", "HAAS_TAP");
+      }
+      if (c.tapStyle === "straight" && c.matIso) {
+        if (R.shortChipIso.indexOf(c.matIso) < 0) add("packing-2", "amber", "Straight flute in ISO " + c.matIso + " material: long chips. Use spiral flute (blind) or spiral point (through).", "OSG_TAP");
+        else add("packing-2", "green", "Straight flute in cast iron (short chips) ✓", "OSG_TAP");
+      }
+    }
+    // Holder (rigid tapping with M29)
+    if (c.holder) {
+      if (c.holder === "tensionComp") {
+        add("oversize-2", "amber", "Tension/compression holder with M29 rigid tapping: float can pull the tap and overcut.", "OSG_VIDEO");
+        add("finish-7", "amber", "Floating holder on a synchronized spindle: can tear threads.", "OSG_TAP");
+        add("fanuc-7", "amber", "Tension/compression holder in M29: use rigid or minimal-compensation (synchro).", "OSG_VIDEO");
+      } else {
+        const h = c.holder === "synchro" ? "Synchro (minimal-compensation) holder ✓" : "Rigid holder ✓";
+        ["oversize-2", "finish-7", "fanuc-7"].forEach((id) => add(id, "green", h, id === "finish-7" ? "OSG_TAP" : "OSG_VIDEO"));
+      }
+    }
+    // Tap speed and tap material
+    if (c.tsBlocked) add("broke-8", "red", c.tsReason || "Tap blocked for this material / hardness.", "SV_TAP");
+    else if (fin(c.tapSfm) && c.tapSfm > 0) add("broke-8", "green", "Tap material OK for this hardness ✓", "SV_TAP");
+    if (fin(c.tapSfm) && fin(c.tapSfmHi) && c.tapSfmHi > 0) {
+      if (c.tapOwn && c.tapSfm > c.tapSfmHi * R.hiTol) {
+        many(["broke-5", "oversize-5", "finish-1", "finish-6"], "amber", "You typed " + SP(c.tapSfm) + "; published top is " + SP(c.tapSfmHi) + ".", "SV_TAP");
+      } else {
+        many(["broke-5", "finish-6"], "green", (c.tapOwn ? "Your " : "") + SP(c.tapSfm) + " is inside the published range ✓", "SV_TAP");
+      }
+    }
+    // Thread class: minor Ø over max (oversize) / under min (tight). Cut taps only.
+    if (cut && !c.pipe && c.classCheckLevel) {
+      const d = c.drillIn > 0 ? " (drill " + L(c.drillIn) + ")" : "";
+      if (c.classCheckLevel === "red") add("oversize-8", "red", (c.classCheck || "Over class max") + d + ".", "YG1_TAP");
+      else if (c.classCheckLevel === "amber") add("tight-2", "amber", (c.classCheck || "Under class min") + d + ".", "SV_TAP");
+      else { add("oversize-8", "green", (c.classCheck || "In class band") + d + " ✓", "YG1_TAP"); add("tight-2", "green", (c.classCheck || "In class band") + d + " ✓", "SV_TAP"); }
+    }
+    // Fanuc block: F = RPM × pitch, M29 right before G84
+    if (Array.isArray(c.fanucLines) && c.fanucLines.length) {
+      const g84 = c.fanucLines.findIndex((l) => /^G84\b/.test(l)), m29 = c.fanucLines.findIndex((l) => /^M29 S\d+/.test(l));
+      const f = g84 >= 0 ? (/F([\d.]+)/.exec(c.fanucLines[g84]) || [])[1] : null;
+      if (c.fanucExact === false) many(["fanuc-1", "oversize-1"], "amber", "F" + (f || "?") + " is rounded, not exactly RPM × pitch. Use G95 with F = pitch.", "F_RIGIDMODE");
+      else if (c.fanucExact === true) many(["fanuc-1", "oversize-1"], "green", "F" + (f || "") + " = RPM × pitch exactly ✓", "F_RIGIDMODE");
+      if (m29 >= 0 && g84 === m29 + 1) add("fanuc-2", "green", "Code box: M29 S__ on the line right before G84 ✓", "F_M29");
+      else add("fanuc-2", "red", "Code box: M29 S__ isn't directly before G84.", "F_M29");
+      add("fanuc-3", m29 >= 0 ? "green" : "red", m29 >= 0 ? "Code box has M29 (rigid mode) ✓" : "No M29: G84 runs as float tapping.", "F16_M29");
+    }
+    // Spot angle for the drill point
+    if (c.pt === 118 || c.pt === 135) add("wander-2", "green", c.pt + "° drill point: spot with a " + (c.pt === 118 ? "120" : "142") + "° spot drill.", "GUH_CENTER");
+    // Drill
+    if (c.dsBlocked) add("burn-7", "red", c.dsReason || "Drill blocked for this hardness.", "OSG_DRILL");
+    else if (c.dsDerated) add("burn-7", "amber", (c.dsNotes && c.dsNotes[0]) || "Speed derated for hardness.", "OSG_DRILL");
+    else if (fin(c.drillSfm)) add("burn-7", "green", "Drill material OK for this hardness ✓", "OSG_DRILL");
+    if (!c.dsBlocked && fin(c.drillSfm) && fin(c.drillSfmHi)) {
+      if (c.drillSfm > c.drillSfmHi * R.hiTol) add("burn-1", "amber", "Your " + SP(c.drillSfm) + " is above the published top (" + SP(c.drillSfmHi) + ").", "SV_DRILLTIPS");
+      else add("burn-1", "green", SP(c.drillSfm) + " is inside the published range ✓", "SV_DRILLTIPS");
+    }
+    if (!c.dsBlocked && fin(c.drillIpr) && fin(c.drillIprHi)) {
+      if (c.drillIpr > c.drillIprHi * R.hiTol) many(["burn-2", "wander-7"], "amber", "Your " + IPR(c.drillIpr) + " is above the published top (" + IPR(c.drillIprHi) + ").", "SV_DRILLTIPS");
+      else many(["burn-2", "wander-7"], "green", IPR(c.drillIpr) + " is inside the published range ✓", "SV_DRILLTIPS");
+      if (c.drillOwnIpr && fin(c.drillIprLo) && c.drillIpr < c.drillIprLo * R.loTol) {
+        add("burn-3", "amber", "Your " + IPR(c.drillIpr) + " is under the published low end (" + IPR(c.drillIprLo) + ")" + (c.matIso === "S" ? ". Titanium / nickel alloys work-harden when the drill rubs." : ": rubbing wears the drill."), "SV_DRILLTIPS");
+      }
+    }
+    if (!c.dsBlocked && fin(c.ld)) {
+      const r = c.ld.toFixed(1) + "×D";
+      if (c.ld >= R.ldDeep) many(["packing-5", "burn-6"], "green", r + " deep: the app already picked " + (c.peckCycle || "a peck cycle") + " to break chips ✓", "OSG_DRILL");
+      if (c.ld > R.ldDeep) add("packing-6", "amber", r + " deep: use through-tool coolant if you have it.", "SV_DRILLTIPS");
+      if (c.peckText && /pilot/i.test(c.peckText)) add("wander-5", "amber", r + " with carbide: start from a pilot hole.", "GUH_CENTER");
+    }
+    // Tap chamfer
+    if (thr && c.chamf) {
+      if (c.chamf === "bottoming") add("finish-4", "amber", "Bottoming tap (~2-thread chamfer): use plug if the hole has room.", "YG1_TAP");
+      else add("finish-4", "green", (c.chamf === "plug" ? "Plug" : "Taper") + " chamfer ✓", "YG1_TAP");
+    }
+    return out;
+  }
+
   const API = {
     IN_MM, K, PCT_LIMIT, PCT_LOW, TAPER_INFO, findThread, pipeDrill, pitchIn, pitchMm, majorIn, tapDrillExact, pctFromDrill,
     pctStatus, nearestDrills, tapDrill, recommend, hrcToHb, hbToHrc, rpmFromSfm, sfmFromRpm,
     rpmFromMmin, mminFromRpm, interp, material, drillStart, peckAdvice, tapStart, rigidFeed, fWord,
-    fanucBlock, drillBlock, snappedTapCost, per1000, minorLimits, classCheck, clearance, pointLen, CHAMFER, holeChain, zWord,
+    fanucBlock, drillBlock, snappedTapCost, per1000, minorLimits, classCheck, clearance, pointLen, CHAMFER, BLIND_CLEAR_MIN_IN, holeChain, zWord,
+    nextDrillUp, troubleChecks,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.DT_CALC = API;

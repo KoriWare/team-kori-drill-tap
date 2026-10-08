@@ -152,4 +152,120 @@ t("NPS straight pipe 1/8-2: Allied drill primary, NPSC alternate", () => {
   assert.equal(r.taper, false); assert(/NPS/.test(r.status.text));
   assert.equal(C.tapDrill(th("NPS-1/8"), "cut", 0, "in").rec.label, "S");
 });
+
+// ------------------------------------------------------------ troubleshoot checks (Jenny)
+// Builds the same ctx app.js puts in DT_STATE.tc (inches, SFM), from the app's defaults unless overridden.
+function tcCtx(o) {
+  o = Object.assign({ thread: "UNC-1/4-20", tapType: "cut", pct: null, cls: "2B", hole: "blind", depthIn: 0.375, chamf: "plug", pt: 118,
+    mat: "low_c", tapMat: "hss", drillMat: "hss", hb: null, tapStyle: "spiralFlute", holder: "rigid", units: "in", tapSfm: 0 }, o);
+  const t = th(o.thread), hb = o.hb || C.material(o.mat).defaultHB;
+  const pct = o.pct || (o.tapType === "form" ? 65 : 75);
+  const r = C.tapDrill(t, o.tapType, pct, o.units), rec = r.rec;
+  const lim = C.minorLimits(t, o.cls), chk = lim ? C.classCheck(lim, rec.dIn, o.tapType) : null;
+  const h = C.holeChain({ mode: o.hole, depthIn: o.depthIn, pitchIn: C.pitchIn(t), drillIn: rec.dIn, pointDeg: o.pt, chamfer: o.chamf });
+  const ts = C.tapStart(o.mat, o.tapType, o.tapMat, hb, t, o.tapSfm), pub = o.tapSfm > 0 ? C.tapStart(o.mat, o.tapType, o.tapMat, hb, t, 0) : ts;
+  const fb = ts.ok ? C.fanucBlock(ts.rpm, t, o.units, h.tapZ) : null;
+  const ds = C.drillStart(o.mat, o.drillMat, hb, rec.dIn, o.depthIn > 0 ? h.drillZ : 0);
+  const db = ds.ok ? C.drillBlock(ds, o.units, h.drillZ) : null;
+  return { units: o.units, thread: t, tapType: o.tapType, pipe: false, pct: rec.pct, pctLimit: C.PCT_LIMIT[o.tapType], cls: lim && lim.cls, drillIn: rec.dIn,
+    hole: o.hole, depthIn: o.depthIn, majorIn: C.majorIn(t), pitchIn: C.pitchIn(t), tapZ: h.tapZ, drillFull: h.drillFull, chamf: o.chamf, pt: o.pt,
+    tapStyle: o.tapStyle, holder: o.holder, matIso: C.material(o.mat).iso,
+    tapOwn: !!ts.override, tapSfm: ts.ok ? ts.sfm : null, tapSfmHi: pub.ok ? pub.sfmHi : null, tsBlocked: !!(ts.blocked || pub.blocked), tsReason: ts.reason || pub.reason,
+    classCheckLevel: chk && chk.level, classCheck: chk && chk.text, fanucExact: fb ? fb.exact : null, fanucLines: fb ? fb.lines : null,
+    dsBlocked: !!ds.blocked, dsReason: ds.reason, dsDerated: !!ds.derated, dsNotes: ds.notes,
+    drillSfm: ds.ok ? ds.sfm : null, drillSfmHi: ds.ok ? ds.sfmHi : null, drillIpr: ds.ok ? ds.ipr : null, drillIprHi: ds.ok ? ds.iprHi : null, drillIprLo: ds.ok ? ds.ipr : null,
+    drillOwnIpr: false, ld: ds.ok ? ds.ld : null, peckText: ds.ok ? ds.peck.text : null, peckCycle: db ? db.cycle : null };
+}
+const chk = (list, id) => list.find((c) => c.id === id);
+const IDS = new Set(require("fs").readFileSync(require("path").join(__dirname, "..", "troubledata.js"), "utf8").match(/"id": "[a-z]+-\d+"/g).map((s) => s.slice(7, -1)));
+
+t("troubleChecks: 1/4-20 cut default blind → no red, every id is a real card, shape matches the panel", () => {
+  const out = C.troubleChecks(tcCtx({}));
+  assert(out.length > 10, "expected many checks");
+  assert(!out.some((c) => c.sev === "red"), "no red expected: " + out.filter((c) => c.sev === "red").map((c) => c.id));
+  out.forEach((c) => {
+    assert(IDS.has(c.id), "unknown card id " + c.id);
+    assert(c.level === (c.sev === "green" ? "ok" : "live") && c.you === c.text && c.symptom === c.id.split("-")[0] && D.TROUBLE_SRC[c.sourceKey], "shape " + c.id);
+  });
+  assert.strictEqual(chk(out, "broke-1").sev, "green");
+  assert.strictEqual(chk(out, "broke-2").sev, "green", "20 TPI: one pitch = .050, meets Haas");
+  assert.strictEqual(chk(out, "fanuc-2").sev, "green");
+});
+t("troubleChecks: accepts DT_STATE (reads .tc) and junk input", () => {
+  assert.deepStrictEqual(C.troubleChecks({ S: {}, tc: tcCtx({}) }), C.troubleChecks(tcCtx({})));
+  assert.deepStrictEqual(C.troubleChecks(null), []); assert.deepStrictEqual(C.troubleChecks({}), []);
+});
+t("troubleChecks: 80% cut → broke-1 amber with the user's % and a next drill that stays in 2B", () => {
+  const c = tcCtx({ pct: 80 }); assert(c.pct > 75 && c.pct <= 85, "rec pct " + c.pct);
+  const k = chk(C.troubleChecks(c), "broke-1");
+  assert.strictEqual(k.sev, "amber"); assert.strictEqual(k.level, "live");
+  assert(k.text.indexOf(c.pct.toFixed(1) + "%") >= 0, k.text);
+  assert(/Next drill up: #7 \(\.2010"\)/.test(k.text), k.text);
+});
+t("nextDrillUp: 1/4-20 from #8 → #7 (in 2B); from #3 → null (over 2B max)", () => {
+  const t1 = th("UNC-1/4-20");
+  assert.strictEqual(C.nextDrillUp(t1, "cut", 0.199, "2B", "in").label, "#7");
+  assert.strictEqual(C.nextDrillUp(t1, "cut", 0.213, "2B", "in"), null);
+});
+t("troubleChecks: form tap at 80% → red (broke-1 and tight-3)", () => {
+  const out = C.troubleChecks(Object.assign(tcCtx({ tapType: "form" }), { pct: 80 }));
+  assert.strictEqual(chk(out, "broke-1").sev, "red"); assert.strictEqual(chk(out, "tight-3").sev, "red");
+  assert(chk(out, "broke-1").text.indexOf("80.0%") >= 0);
+});
+t("troubleChecks: blind + spiral point → red packing cards; through + spiral point → green", () => {
+  const out = C.troubleChecks(tcCtx({ tapStyle: "spiralPoint" }));
+  ["broke-4", "packing-1", "oversize-4", "finish-3"].forEach((id) => assert.strictEqual(chk(out, id).sev, "red", id));
+  const thru = C.troubleChecks(tcCtx({ tapStyle: "spiralPoint", hole: "through" }));
+  assert.strictEqual(chk(thru, "broke-4").sev, "green");
+});
+t("troubleChecks: blind + straight flute deeper than 1.5×D → amber; straight in steel → packing-2 amber", () => {
+  const out = C.troubleChecks(tcCtx({ tapStyle: "straight", depthIn: 0.5 }));
+  assert.strictEqual(chk(out, "broke-4").sev, "amber"); assert.strictEqual(chk(out, "broke-3").sev, "amber");
+  assert.strictEqual(chk(out, "packing-2").sev, "amber");
+  assert.strictEqual(chk(C.troubleChecks(tcCtx({ tapStyle: "straight", mat: "ci_gray" })), "packing-2").sev, "green");
+});
+t("blind clearance = max(1 pitch, .050\"): 1/4-20 keeps 1P (drill Z .6854), 1/4-28 and M6x1 get .050\"", () => {
+  const z = (id, d) => { const t1 = th(id); return C.holeChain({ mode: "blind", depthIn: d, pitchIn: C.pitchIn(t1), drillIn: C.tapDrill(t1, "cut", 75, "in").rec.dIn, pointDeg: 118, chamfer: "plug" }); };
+  const a = z("UNC-1/4-20", 0.375); near(a.clearIn, 0.05, 1e-12, "1/4-20 1P"); assert.equal(C.zWord(a.drillZ, "in"), "Z-0.6854"); assert(a.clearByPitch);
+  const b = z("UNF-1/4-28", 0.375); near(b.clearIn, 0.05, 1e-12, "1/4-28 min"); near(b.drillFull - b.tapZ, 0.05, 1e-12); assert(!b.clearByPitch);
+  const m = z("M6x1", 0.375); near(m.clearIn, 0.05, 1e-12, "M6x1 min (1 mm < 1.27 mm)"); near(m.clearIn * 25.4, 1.27, 1e-9);
+  const big = z("UNC-1/2-13", 0.75); near(big.clearIn, 1 / 13, 1e-12, "coarse pitch keeps 1P");
+  const thru = C.holeChain({ mode: "through", depthIn: 0.5, pitchIn: 1 / 28, drillIn: 0.213, pointDeg: 118, chamfer: "plug" });
+  near(thru.tapZ, 0.5 + 5 / 28, 1e-12, "through holes unchanged");
+});
+t("troubleChecks: broke-2 green for app values (1/4-28 now leaves .050\"); amber only for a hand-built ctx under .050\"", () => {
+  const c = tcCtx({ thread: "UNF-1/4-28" });
+  const k = chk(C.troubleChecks(c), "broke-2"); assert.strictEqual(k.sev, "green"); assert(k.text.indexOf('.0500"') >= 0, k.text);
+  const k2 = chk(C.troubleChecks(Object.assign({}, c, { drillFull: c.tapZ + 1 / 28 })), "broke-2");
+  assert.strictEqual(k2.sev, "amber"); assert(k2.text.indexOf('.0357"') >= 0, k2.text);
+});
+t("troubleChecks: F not exact → amber fanuc-1 / oversize-1; exact → green", () => {
+  const out = C.troubleChecks(Object.assign(tcCtx({}), { fanucExact: false }));
+  assert.strictEqual(chk(out, "fanuc-1").sev, "amber"); assert.strictEqual(chk(out, "oversize-1").sev, "amber");
+  assert(/G95/.test(chk(out, "fanuc-1").text));
+  assert.strictEqual(chk(C.troubleChecks(Object.assign(tcCtx({}), { fanucExact: true })), "fanuc-1").sev, "green");
+});
+t("troubleChecks: ld ≥ 3 → green peck note naming the cycle; ld > 3 → coolant amber", () => {
+  const c = tcCtx({ depthIn: 0.75 }); assert(c.ld >= 3, "ld " + c.ld);
+  const out = C.troubleChecks(c), k = chk(out, "packing-5");
+  assert.strictEqual(k.sev, "green"); assert(k.text.indexOf(c.peckCycle) >= 0 && /G73|G83/.test(k.text), k.text);
+  assert.strictEqual(chk(out, "packing-6").sev, "amber");
+  const sh = tcCtx({ depthIn: 0.15 }); assert(sh.ld < 3, "ld " + sh.ld); assert(!chk(C.troubleChecks(sh), "packing-5"), "under 3×D: no peck card");
+});
+t("troubleChecks: tap blocked (HSS over 327 HB) → broke-8 red, even with a typed speed", () => {
+  const c = tcCtx({ hb: 400, mat: "alloy_ph" }); assert(c.tsBlocked);
+  assert.strictEqual(chk(C.troubleChecks(c), "broke-8").sev, "red");
+  const c2 = tcCtx({ hb: 400, mat: "alloy_ph", tapSfm: 30 }); assert(c2.tsBlocked, "override must not hide the block");
+  assert.strictEqual(chk(C.troubleChecks(c2), "broke-8").sev, "red");
+});
+t("troubleChecks: typed tap SFM over the published top → amber with both numbers", () => {
+  const out = C.troubleChecks(tcCtx({ tapSfm: 80 })), k = chk(out, "broke-5");
+  assert.strictEqual(k.sev, "amber"); assert(/80 SFM/.test(k.text) && /50 SFM/.test(k.text), k.text);
+});
+t("troubleChecks: tension/compression holder → amber; class over max → oversize-8 red; bottoming chamfer → amber", () => {
+  assert.strictEqual(chk(C.troubleChecks(tcCtx({ holder: "tensionComp" })), "fanuc-7").sev, "amber");
+  const o = C.troubleChecks(Object.assign(tcCtx({}), { classCheckLevel: "red", classCheck: "Over max for 2B", drillIn: 0.213 }));
+  assert.strictEqual(chk(o, "oversize-8").sev, "red");
+  assert.strictEqual(chk(C.troubleChecks(tcCtx({ chamf: "bottoming" })), "finish-4").sev, "amber");
+});
 console.log("\n" + n + " tests passed");

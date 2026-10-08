@@ -1,7 +1,8 @@
 /* Team Kori — Drill & Tap · Troubleshoot panel (Maria: UI).
  * Content: window.DT_DATA.TROUBLE  = { symptomId: [ { id, title, why, fix, src } ] }   (Jenny)
- * Checks:  window.DT_CALC.troubleChecks(state) -> [ { id, level: "live" | "ok", you: "…" } ] (Jenny)
- * state comes from app.js on every render (document "dt:change", also window.DT_STATE).
+ * Checks:  window.DT_CALC.troubleChecks(state) -> [ { id, level: "live" | "ok", sev: "red" | "amber" | "green", you: "…", sourceKey } ] (Jenny)
+ * state comes from app.js on every render (document "dt:change", also window.DT_STATE); calc reads state.tc (inches, SFM).
+ * sev "red" cards sort first and tag HIGH RISK; "amber" tags YOUR SETTINGS; "ok" tags CHECKED.
  * Until Jenny's data lands, the SAMPLE content below is shown with a gold "sample text" note. */
 (function () {
   "use strict";
@@ -95,14 +96,14 @@
     }).join("");
     if (!sel || !data[sel]) { $("ts-body").innerHTML = '<div class="ts-hint">Pick a symptom to see likely causes and fixes.</div>'; return; }
     const sym = SYMPTOMS.find((s) => s.id === sel), cards = data[sel].slice();
-    const rank = (c) => (byId[c.id] ? (byId[c.id].level === "live" ? 0 : 2) : 1);
+    const rank = (c) => (byId[c.id] ? (byId[c.id].level === "live" ? (byId[c.id].sev === "red" ? -1 : 0) : 2) : 1);
     cards.sort((a, b) => rank(a) - rank(b));
     const nl = liveIn(sel), no = okIn(sel);
     let h = '<div class="ts-h"><span class="lbl">' + esc(sym.name) + (sel === "fanuc" ? "" : " · likely causes") + "</span>" +
       (nl ? '<span class="lbl a">' + nl + " match you</span>" : no ? '<span class="lbl g">' + no + " checked</span>" : "") + "</div>";
     cards.forEach((c) => {
       const k = byId[c.id], cls = k ? (k.level === "live" ? " live" : " ok") : "";
-      h += '<div class="fx' + cls + '"><div class="t">' + esc(c.title) + (k ? '<span class="tag">' + (k.level === "live" ? "YOUR SETTINGS" : "CHECKED") + "</span>" : "") + "</div>" +
+      h += '<div class="fx' + cls + '"><div class="t">' + esc(c.title) + (k ? '<span class="tag">' + (k.level === "live" ? (k.sev === "red" ? "HIGH RISK" : "YOUR SETTINGS") : "CHECKED") + "</span>" : "") + "</div>" +
         (c.why ? '<div class="why">' + esc(c.why) + "</div>" : "") + (c.fix ? '<div class="do"><b>Fix:</b> ' + esc(c.fix) + "</div>" : "") +
         (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
     });

@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=q1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=q1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=q1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=q1" />
-  <link rel="stylesheet" href="styles.css?v=q1" />
+  <link rel="manifest" href="manifest.webmanifest?v=tc1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=tc1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=tc1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=tc1" />
+  <link rel="stylesheet" href="styles.css?v=tc1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -48,8 +48,10 @@
         </ul>
         <p><b>4. Speeds &amp; feeds.</b> Set the work material and its hardness once (HB or HRC). Leave hardness blank and the app uses a typical value for that material. If the material is too soft for the HRC scale, switch to HB.</p>
         <p><b>5. Make the numbers yours.</b> Tap SFM and the drill's Speed, Spindle and Feed/rev boxes show the calculated values. Type over any of them (a dashed underline means you can edit it). Drill speed and spindle are linked through the drill Ø, so changing one updates the other. Tap <b>use calculated</b> to go back. Going above the published range shows a heads-up in the notes.</p>
-        <p><b>6. Hole depth.</b> Pick Blind or Through, type the full thread depth (or part thickness), the tap chamfer and the drill point (118° or 135°). The app works out <b>Tap to Z</b> (thread + chamfer threads) and <b>Drill to Z</b> (one pitch of clearance plus the point on blind holes, or a small breakout plus the point on through holes) and fills them into both code boxes.</p>
+        <p><b>6. Hole depth.</b> Pick Blind or Through, type the full thread depth (or part thickness), the tap chamfer and the drill point (118° or 135°). The app works out <b>Tap to Z</b> (thread + chamfer threads) and <b>Drill to Z</b> (on blind holes, one pitch of clearance but never less than .050" / 1.27 mm, the Haas minimum, plus the point; on through holes, a small breakout plus the point) and fills them into both code boxes.</p>
         <p><b>7. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Z comes from Hole depth (Z0 = top of the part). Each amber <b>?</b> is yours to fill in: X Y (hole position) and R (retract plane), plus Z if no depth is set. Never run a block that still has a ? in it. <b>Copy</b> above each box copies the whole block.</p>
+        <p><b>8. Tap style &amp; holder.</b> Under Rigid tap, pick the tap you're running: <b>spiral flute</b> (lifts chips out, the pick for blind holes), <b>spiral point</b> (pushes chips ahead, through holes only) or <b>straight flute</b> (short-chipping work like cast iron, shallow holes). Form taps make no chips, so style doesn't apply. <b>Holder</b>: rigid, synchro (minimal compensation) or tension/compression. With M29 rigid tapping, a floating tension/compression holder can pull the tap and cut oversize. Both choices are saved on this device and feed Troubleshoot.</p>
+        <p><b>9. Troubleshoot.</b> Pick what went wrong (tap broke, thread oversize or tight, drill wanders, chips packing, drill burns, bad finish, Fanuc rigid tap). Each card is a sourced cause and fix. Cards that match your current settings light up amber (<b>YOUR SETTINGS</b>, or <b>HIGH RISK</b> for the worst ones) and show your number; green <b>CHECKED</b> cards are ones your settings already pass. Tap a source to open it.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
         <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Method: cost per hole = (tap price + change time) ÷ holes per tap, plus breakage. Dollar defaults are samples, not published data. Type your own to estimate. They stay on your device and aren't in the share link.</p>
@@ -154,6 +156,23 @@
       <div class="row">
         <label class="field" style="flex:2"><div class="lbl">Tap material</div><select id="tapmat"></select></label>
         <label class="field"><div class="lbl" id="tap-ov-lbl">Tap SFM</div><input id="tap-ov" type="number" inputmode="decimal" min="0" step="any" placeholder="—" aria-describedby="tap-ov-hint" /><div class="hint" id="tap-ov-hint">calculated · type to change</div></label>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="lbl" id="tsty-lbl">Tap style</div>
+          <div class="seg sm" id="tsty-seg" role="group" aria-labelledby="tsty-lbl">
+            <button type="button" data-tsty="spiralFlute" class="on" aria-pressed="true">Spiral flute</button><button type="button" data-tsty="spiralPoint" aria-pressed="false">Spiral point</button><button type="button" data-tsty="straight" aria-pressed="false">Straight</button>
+          </div>
+          <div class="hint" id="tsty-hint"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="lbl" id="hold-lbl">Tap holder</div>
+          <div class="seg sm" id="hold-seg" role="group" aria-labelledby="hold-lbl">
+            <button type="button" data-hold="rigid" class="on" aria-pressed="true">Rigid</button><button type="button" data-hold="synchro" aria-pressed="false">Synchro</button><button type="button" data-hold="tensionComp" aria-pressed="false">Tension/comp</button>
+          </div>
+        </div>
       </div>
       <div class="readouts">
         <div class="ro"><div class="lbl">Spindle</div><div class="v" id="t-rpm">—</div><div class="s" id="t-rpm-s"></div></div>
@@ -283,10 +302,10 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=q1"></script>
-<script src="calc.js?v=q1"></script>
-<script src="app.js?v=q1"></script>
-<script src="troubledata.js?v=q1"></script>
-<script src="troubleshoot.js?v=q1"></script>
+<script src="data.js?v=tc1"></script>
+<script src="calc.js?v=tc1"></script>
+<script src="app.js?v=tc1"></script>
+<script src="troubledata.js?v=tc1"></script>
+<script src="troubleshoot.js?v=tc1"></script>
 </body>
 </html>

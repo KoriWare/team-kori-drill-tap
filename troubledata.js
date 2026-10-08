@@ -81,8 +81,8 @@
    "title": "Rigid-tap feed doesn't equal RPM x lead",
    "fix": "G94: F = RPM x lead per minute. G95: F = lead. If F was rounded, use G95.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/98"
+    "name": "Fanuc 30i-A manual p.78",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -135,8 +135,8 @@
    "title": "Spindle and Z axis drifting out of sync",
    "fix": "Check Fanuc rigid-tap sync diagnostics 455-457. A minimal-compensation holder absorbs small sync errors.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/260/series-16i-160i-160is-18i-180i-180is-20i-21i-210i-210is-model-b-connection-manual-function/page/1160"
+    "name": "Fanuc 16i-B manual p.1134",
+    "url": "https://www.drivesul.com.br/template/imagens/manuais/manuais-fanuc/fanuc-series-16i-18i-21i-model-b/Series%2016i-18i-21i-MODEL%20B%20-%20Connection%20Manual%20(Function).pdf#page=1162"
    }
   },
   {
@@ -303,8 +303,8 @@
    "title": "Deep tapped hole: chips stick, torque rises",
    "fix": "Use Fanuc peck rigid tapping: add Q (depth per peck) to the G84 line.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/105"
+    "name": "Fanuc 30i-A manual p.85",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -507,8 +507,8 @@
    "title": "F doesn't equal RPM x lead",
    "fix": "G94: F = S x lead. G95: F = lead. If F is rounded, use G95.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/98"
+    "name": "Fanuc 30i-A manual p.78",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -516,8 +516,8 @@
    "title": "S word or move between M29 and G84",
    "fix": "Put M29 S__ on its own line right before G84. Otherwise alarm PS0203.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/100"
+    "name": "Fanuc 30i-A manual p.80",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -525,8 +525,8 @@
    "title": "No M29, so G84 runs as ordinary float tapping",
    "fix": "Add M29 S__ before G84, or confirm parameter 5200#0 makes G84 rigid-only.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/260/series-16i-160i-160is-18i-180i-180is-20i-21i-210i-210is-model-b-connection-manual-function/page/1152"
+    "name": "Fanuc 16i-B manual p.1126",
+    "url": "https://www.drivesul.com.br/template/imagens/manuais/manuais-fanuc/fanuc-series-16i-18i-21i-model-b/Series%2016i-18i-21i-MODEL%20B%20-%20Connection%20Manual%20(Function).pdf#page=1154"
    }
   },
   {
@@ -534,8 +534,8 @@
    "title": "Expecting the override knobs to work in G84",
    "fix": "Overrides are held at 100% while rigid tapping. Change S and F in the program.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/97"
+    "name": "Fanuc 30i-A manual p.77",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -543,8 +543,8 @@
    "title": "Extraction override makes the retract faster than the feed-in",
    "fix": "Check 5200#4 (DOV), 5211 and any J word. Haas advises a slower retract if threads tear.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/110"
+    "name": "Fanuc 30i-A manual p.90",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -552,8 +552,8 @@
    "title": "Deep hole: chips stick and cutting load rises",
    "fix": "Use peck rigid tapping: Q = depth per peck, Q0 = no peck. 5200#5 (PCP) sets the type.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/751/30i-300i-300is-ma-31i-310i-310is-ma-and-a5-32i-320i-320is-ma-users-manual/page/105"
+    "name": "Fanuc 30i-A manual p.85",
+    "url": "https://manualmachine.com/fanuc/30ia/4715028-user-manual/"
    }
   },
   {
@@ -570,8 +570,8 @@
    "title": "Spindle and Z sync error during tapping",
    "fix": "Watch diagnostics 455-457 while tapping. Parameter 5214 sets the alarm 741 limit. Have service tune it.",
    "src": {
-    "name": "Fanuc",
-    "url": "http://www.cncmanuals.com/fanuc/260/series-16i-160i-160is-18i-180i-180is-20i-21i-210i-210is-model-b-connection-manual-function/page/1160"
+    "name": "Fanuc 16i-B manual p.1134",
+    "url": "https://www.drivesul.com.br/template/imagens/manuais/manuais-fanuc/fanuc-series-16i-18i-21i-model-b/Series%2016i-18i-21i-MODEL%20B%20-%20Connection%20Manual%20(Function).pdf#page=1162"
    }
   }
  ]

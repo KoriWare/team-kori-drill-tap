@@ -941,11 +941,39 @@
     form: { tapCost: 28, holesPerTap: 4000, holesPerBreak: 8000 },
   };
 
+  // ------------------------------------------------------------- TROUBLESHOOT
+  // Thresholds for DT_CALC.troubleChecks (Jenny's research: dt-research/troubleshoot.md / .json).
+  const TROUBLE_RULES = {
+    blindClearMinIn: 0.050, // Haas TG0144 tap breakage guide: drill blind holes at least .050" deeper than the tap goes
+    pctAmberCut: 75,        // Haas TG0144: 75% thread is ~5% weaker than 100% for about 1/3 the cutting force
+    depthRatio: 1.5,        // Haas TG0144: breakage risk rises past 1.5 x D thread depth; OSG: straight flutes only for shallow blind holes
+    ldDeep: 3,              // peckAdvice pecks from 3 x D; Sandvik drilling tips: internal coolant for holes over 3 x D
+    hiTol: 1.005, loTol: 0.995, // same margins as the app's existing "above the published range" notes
+    shortChipIso: ["K"],    // OSG Tap Guide: straight flutes suit short-chipping work (cast iron)
+  };
+  // sourceKey -> source, for check results (same keys as troubleshoot.json "sourceKey").
+  const TROUBLE_SRC = {
+    OSG_TAP: { name: "OSG Tap Technical Guide Vol 1", url: "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319427/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Tap_-_Vol_1_-_IA.pdf" },
+    OSG_DRILL: { name: "OSG Drilling Technical Guide Vol 1", url: "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319429/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Drilling-_Vol_1_-_IA.pdf" },
+    OSG_VIDEO: { name: "OSG 60sec Troubleshooting (MSC)", url: "https://www.mscdirect.com/knowledge-center/articles/video-60sec-troubleshooting-threading-tension-compression-vs-rigid-tapping" },
+    HAAS_TAP: { name: "Haas TG0144 Tap Breakage", url: "https://www.haascnc.com/service/troubleshooting-and-how-to/troubleshooting/tap-breakage-troubleshooting.html" },
+    SV_TAP: { name: "Sandvik Coromant tapping troubleshooting", url: "https://www.sandvik.coromant.com/en-us/knowledge/threading/tapping/troubleshooting-tapping" },
+    SV_TAPTIPS: { name: "Sandvik Coromant tapping tips", url: "https://www.sandvik.coromant.com/en-us/knowledge/threading/tapping/operation-tips" },
+    SV_DRILLTS: { name: "Sandvik Coromant drilling troubleshooting", url: "https://www.sandvik.coromant.com/en-us/knowledge/drilling/drilling-wear-and-troubleshooting" },
+    SV_DRILLTIPS: { name: "Sandvik Coromant drilling tips", url: "https://www.sandvik.coromant.com/en-us/knowledge/drilling/drilling-tips" },
+    YG1_TAP: { name: "YG-1 Tap Trouble Shooting Guide", url: "https://www.suncoasttools.com/PDFFILES/YG1/Technical/Taps/YG1-TAP-TROUBLE-SHOOTING-GUIDE.pdf" },
+    GUH_CENTER: { name: "Guhring centering and pilot drilling", url: "https://guhring.com/media/support/Centering-And-Pilot-Drilling-Recommendations.pdf" },
+    F_RIGIDMODE: { name: "Fanuc 30i-A manual p.78", url: "https://manualmachine.com/fanuc/30ia/4715028-user-manual/" },
+    F_M29: { name: "Fanuc 30i-A manual p.80", url: "https://manualmachine.com/fanuc/30ia/4715028-user-manual/" },
+    F_PECK: { name: "Fanuc 30i-A manual p.85", url: "https://manualmachine.com/fanuc/30ia/4715028-user-manual/" },
+    F16_M29: { name: "Fanuc 16i-B manual p.1126", url: "https://www.drivesul.com.br/template/imagens/manuais/manuais-fanuc/fanuc-series-16i-18i-21i-model-b/Series%2016i-18i-21i-MODEL%20B%20-%20Connection%20Manual%20(Function).pdf#page=1154" },
+  };
+
   const DATA = {
     THREAD_LIST, THREAD_SERIES, TAPER, INCH_DRILLS, METRIC_DRILLS, NUMBER_DRILLS, LETTER_DRILLS, HRC_HB, LIMITS, DERATE,
     DEPTH_REDUCTION, D_MORSE_HSS, D_RED, D_TRU, D_MORSE_CARB, MORSE_HSS, REDLINE, TRUEDGE,
     MORSE_CARB, HAAS_BANDS, HAAS_IDX, TAP_SRC, MATERIALS, DRILL_MATERIALS, TAP_MATERIALS,
-    DEMO_COST, M_TO_SFM, TD1, CLEAR_IN, CLEAR_MM,
+    DEMO_COST, M_TO_SFM, TD1, CLEAR_IN, CLEAR_MM, TROUBLE_RULES, TROUBLE_SRC,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = DATA;
