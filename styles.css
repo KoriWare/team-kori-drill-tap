@@ -215,3 +215,37 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 .cmp .ro .line.mut{font-size:10.5px;color:var(--dim);opacity:.85;margin-top:0;padding-left:10px;border-left:1px solid rgba(232,197,71,.35);margin-left:2px}
 /* code boxes: "?" = fill this in (amber, Maria q1) */
 .code .q{color:var(--amber);font-weight:800;background:rgba(251,191,36,.14);border-radius:4px;padding:0 3px;margin:0 1px;box-shadow:inset 0 0 0 1px rgba(251,191,36,.45)}
+/* --- Troubleshoot panel (Maria, ts1) --- */
+.ts details.acc>summary{gap:10px}
+.ts details.acc>summary .lbl{color:var(--text)}
+.ts-badge{margin-left:auto;font:700 10.5px var(--mono);letter-spacing:.08em;color:var(--amber);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.45);padding:2px 8px;border-radius:999px}
+.ts-badge.ok{color:var(--green);background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.4)}
+.ts-sub{font-size:12px;color:var(--dim);margin-top:8px}
+.ts-sample{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px dashed rgba(232,197,71,.5);border-radius:8px;padding:4px 8px;margin-top:8px;text-align:center}
+.ts-sym{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.ts-sym button{font:600 12px var(--sans);color:var(--dim);background:#0b1115;border:1px solid var(--line);border-radius:999px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s}
+.ts-sym button:hover{color:var(--text);border-color:#2c3b46}
+.ts-sym button .n{font:700 10px var(--mono);color:var(--amber)}
+.ts-sym button.on{color:var(--teal);background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.55);box-shadow:0 0 12px rgba(45,212,191,.15)}
+.ts-sym button.cu.on{color:var(--cu2);background:rgba(232,137,74,.12);border-color:rgba(232,137,74,.55);box-shadow:0 0 12px rgba(232,137,74,.15)}
+.ts-sym .ic{font-size:13px}
+.ts-hint{font-size:12px;color:var(--dim);margin-top:12px;font-style:italic}
+.ts-h{display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+.ts-h .lbl.a{color:var(--amber)}.ts-h .lbl.g{color:var(--green)}
+.fx{position:relative;margin-top:8px;padding:11px 12px 11px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0e151a,#0b1115)}
+.fx::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:#3a4c57}
+.fx.live{border-color:rgba(251,191,36,.5);background:linear-gradient(180deg,rgba(251,191,36,.07),#0b1115)}
+.fx.live::before{background:var(--amber);box-shadow:0 0 10px rgba(251,191,36,.6)}
+.fx.ok::before{background:var(--green)}
+.fx .t{display:flex;align-items:center;gap:8px;font:600 13.5px var(--sans)}
+.fx .tag{margin-left:auto;font:700 9.5px var(--mono);letter-spacing:.1em;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.fx.live .tag{color:var(--amber);border:1px solid rgba(251,191,36,.5)}
+.fx.ok .tag{color:var(--green);border:1px solid rgba(52,211,153,.45)}
+.fx .why{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.45}
+.fx .do{font-size:12.5px;margin-top:6px;line-height:1.45}
+.fx .do b{color:var(--teal)}
+.fx .you{display:inline-block;margin-top:7px;font:12px var(--mono);color:var(--amber);background:rgba(251,191,36,.08);border-radius:6px;padding:3px 7px}
+.fx.ok .you{color:var(--green);background:rgba(52,211,153,.08)}
+.ts-cost{margin-top:10px;padding:10px 12px;border:1px dashed rgba(232,197,71,.55);border-radius:12px;background:rgba(232,197,71,.05);font-size:12px;color:#e9dca0;line-height:1.45}
+.ts-cost .lbl{color:var(--gold);margin-bottom:3px}
+.ts-cost b{color:var(--gold);font:700 14px var(--mono)}

@@ -327,6 +327,7 @@
   function curThread() { return C.findThread($("thread").value); }
 
   function renderTapDrill() {
+    emitChange();
     const t = curThread();
     const svg = $("xsec");
     $("pct-field").hidden = !!t.pipe;
@@ -493,6 +494,7 @@
   }
 
   function renderTap() {
+    emitChange();
     const t = curThread(), h = hb();
     const inp = $("tap-ov"), mmU = S.units === "mm";
     let ov = S.tapOwn ? num(inp) : 0;
@@ -554,6 +556,7 @@
   }
 
   function renderDrill() {
+    emitChange();
     if (S.dLinked && lastRec) S.dDiaIn = lastRec.dIn;
     if (document.activeElement !== $("d-dia")) $("d-dia").value = S.units === "mm" ? (S.dDiaIn * IN_MM).toFixed(2) : S.dDiaIn.toFixed(4);
     renderHole();
@@ -634,6 +637,18 @@
   }
 
   function renderAll() { renderTapDrill(); renderTap(); renderDrill(); renderCost(); }
+
+  // Troubleshoot hook (Maria): snapshot for troubleshoot.js and DT_CALC.troubleChecks (Jenny can add fields).
+  let emitT = 0;
+  function emitChange() {
+    clearTimeout(emitT);
+    emitT = setTimeout(() => {
+      const t = curThread();
+      window.DT_STATE = { S: JSON.parse(JSON.stringify(S)), thread: t, hole: hole(), rec: lastRec, tapCode: $("t-code").innerText, drillCode: $("d-code").innerText };
+      document.dispatchEvent(new CustomEvent("dt:change", { detail: window.DT_STATE }));
+    }, 30);
+  }
+
 
   // ------------------------------------------------------------ convert accordion
   function cvSpeed(from) {
