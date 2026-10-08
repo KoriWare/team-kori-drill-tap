@@ -67,7 +67,7 @@
     const st = window.DT_STATE; if (!st || !$("ins-acc")) return;
     const t = st.thread, S = st.S || {}, units = S.units;
     const C = window.DT_CALC || {};
-    let d = null; try { d = typeof C.sti === "function" ? C.sti(t, S) : null; } catch (e) { d = null; }
+    let d = null; try { d = typeof C.sti === "function" ? C.sti(t, Object.assign({}, S, { insLen: lenX })) : null; } catch (e) { d = null; }
     // Live only with sourced data: no DT_CALC.sti, or null for this size, hides the section, the switch and the Troubleshoot button.
     // (#ins-preview in the URL shows the gold-labeled sample frame for design reviews.)
     const preview = /ins-preview/.test(location.hash);
@@ -94,7 +94,7 @@
     $("ins-z").innerHTML = drawIns(t, d, row);
     $("ins-tbl").innerHTML = '<div class="r h"><span>Length</span><span>Hole depth</span><span>Tap Z</span></div>' +
       rows.map((r) => '<div class="r' + (r.x === lenX ? " on" : "") + '"><span><b>' + r.x + "×D</b> " + fmt(r.lenIn, units) + "</span><span>" + fmt(r.holeIn, units) + "</span><span>" + (r.tapZIn > 0 ? "Z-" + (units === "mm" ? (r.tapZIn * 25.4).toFixed(3) : r.tapZIn.toFixed(4)) : "—") + "</span></div>").join("");
-    $("ins-code").innerHTML = d && d.code ? d.code.map((l) => esc(l).replace(/^(M29|G84|G80|G2[01])/, '<span class="k">$1</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>") : '<span class="dimc">STI tap code arrives with the sizes. It uses the same amber ? spots as the tap cycle.</span>';
+    const rc = d && row && row.code ? row.code : d && d.code; $("ins-code").innerHTML = rc ? rc.map((l) => esc(l).replace(/^(M29|G84|G80|G2[01])/, '<span class="k">$1</span>').replace(/\?/g, '<span class="q">?</span>')).join("<br>") : '<span class="dimc">STI tap code arrives with the sizes. It uses the same amber ? spots as the tap cycle.</span>';
     $("ins-steps").innerHTML = (d && d.install ? d.install : SAMPLE_STEPS).map((x) => "<li>" + esc(x) + "</li>").join("");
     const src = d && d.src ? d.src : [];
     $("ins-src").innerHTML = "<b>Sources:</b> " + (src.length ? src.map((q) => /^https:\/\//.test(q.url || "") ? '<a href="' + esc(q.url) + '" target="_blank" rel="noopener">' + esc(q.name) + "</a>" : esc(q.name)).join(" · ") : "Heli-Coil, Recoil and the ASME and ISO insert standards, coming from Jenny's research. Lengths shown are just length × nominal size.");
