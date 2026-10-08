@@ -622,12 +622,174 @@
     return out;
   }
 
+  // ------------------------------------------------------------ STI (helical coil inserts) — Jenny, Round 1
+  // Data: DATA.STI (Heli-Coil HC2000 Rev.12 = hc, Recoil 2020 = rc, Emuge ZS10013 = em), DATA.STI_RULES, DATA.STI_SRC.
+  // Everything here is pure and works in inches internally (metric rows are mm in the data and converted here).
+  const STI_X = [1, 1.5, 2, 2.5, 3];
+  const stiOn = () => !!(DATA.FEATURES && DATA.FEATURES.inserts);
+  /** Drill label as charted ("H", "#25", "17/64", '1-1/32"', "8.3 mm") → inches. NaN if unknown. */
+  function stiDrillIn(label) {
+    if (!label) return NaN;
+    if (/ mm$/.test(label)) return parseFloat(label) / IN_MM;
+    const it = DATA.INCH_DRILLS.find((x) => x.label === label);
+    return it ? it.d : NaN;
+  }
+  function stiRow(t) { return t && !t.pipe && DATA.STI ? DATA.STI[t.id] || null : null; }
+  /**
+   * Everything the charts say about one thread's STI hole, in inches. null when no source covers the size.
+   * { id, inch, pitchIn, majorIn, cls:{free,lock}, drill:{label,dIn,src,use}, drills:[…all charted drills],
+   *   minor:{minIn,maxIn,src}, pd:{minIn,maxLockIn,maxFreeIn}|null, majorMinIn|null, tapMajorMaxIn|null,
+   *   sink:{deg,minIn,maxIn}|null, C:[in ×5]|null, A:{plug:[…],bottoming:[…]}|null, taps:{plugLock,plugFree,botLock,botFree}|null,
+   *   footnote:bool, srcKeys:[…] }
+   */
+  function stiFor(t) {
+    const r = stiRow(t); if (!r) return null;
+    const inch = isInch(t), cv = (v) => (inch ? v : v / IN_MM), cva = (a) => (a ? a.map(cv) : null);
+    const R = DATA.STI_RULES, drills = [];
+    const add = (label, src, use) => { const d = stiDrillIn(label); if (label && d > 0 && !drills.some((x) => x.label === label && x.src === src)) drills.push({ label, dIn: d, src, use }); };
+    if (r.hc) { add(r.hc.d[0], "HC", "aluminum"); add(r.hc.d[1], "HC", "steel, magnesium, plastic"); }
+    if (r.rc) { add(r.rc.d[0], "RC", "inch"); add(r.rc.d[1], "RC", "metric"); }
+    if (r.em) add(r.em.d, "EM", "EG (STI) cut tap");
+    const mi = r.hc ? r.hc.mi : r.rc ? r.rc.mi : r.em.mi, miSrc = r.hc ? "HC" : r.rc ? "RC" : "EM";
+    const jn = r.rc ? cv(r.rc.jn) : r.em ? cv(r.em.jn) : null; // em inch rows are stored already in inches
+    return {
+      id: t.id, inch, pitchIn: pitchIn(t), majorIn: majorIn(t),
+      cls: inch ? R.cls.inch : R.cls.metric,
+      drill: drills[0] || null, drills,
+      minor: { minIn: cv(mi[0]), maxIn: cv(mi[1]), src: miSrc },
+      pd: r.hc ? { minIn: cv(r.hc.pd[0]), maxLockIn: cv(r.hc.pd[1]), maxFreeIn: cv(r.hc.pd[2]) } : null,
+      majorMinIn: jn, tapMajorMaxIn: r.hc ? cv(r.hc.tj) : null,
+      sink: r.hc ? { deg: R.cskDeg, minIn: cv(r.hc.M[0]), maxIn: cv(r.hc.M[1]) } : null,
+      C: r.hc ? cva(r.hc.C) : null,
+      A: r.hc ? { plug: cva(r.hc.A.slice(0, 5)), bottoming: cva(r.hc.A.slice(5, 10)) } : null,
+      taps: r.hc ? { plugLock: r.hc.tap[0], plugFree: r.hc.tap[1], botLock: r.hc.tap[2], botFree: r.hc.tap[3] } : null,
+      footnote: !!(r.hc && r.hc.s),
+      srcKeys: ["HC", "RC", "EM"].filter((k) => r[k.toLowerCase()]),
+    };
+  }
+  /** Minor Ø band of the STI tapped hole (same shape as minorLimits, so classCheck works on it). */
+  function stiLimits(t, cls) {
+    const f = stiFor(t); if (!f) return null;
+    const c = f.inch ? (cls === "3B" ? "3B" : "2B") : (cls === "4H5H" ? "4H5H" : "5H");
+    return { cls: "STI " + c, minIn: f.minor.minIn, maxIn: f.minor.maxIn, std: { HC: "Heli-Coil HC2000", RC: "Recoil 2020", EM: "Emuge ZS10013" }[f.minor.src] };
+  }
+  /** Thread-like object for the STI hole (major = charted STI major Ø min), so pctFromDrill works on it. null if no chart gives it. */
+  function stiThread(t) {
+    const f = stiFor(t); if (!f || !(f.majorMinIn > 0)) return null;
+    return Object.assign({}, t, { id: "STI-" + t.id, label: t.label + " STI", major: inToNative(t, f.majorMinIn), sti: true });
+  }
+  /**
+   * Depth chain for one insert length. x = 1, 1.5, 2, 2.5 or 3 (× nominal Ø); chamfer "plug"|"bottoming"|"taper";
+   * mode "blind"|"through"; pointDeg drill point; thickIn part thickness (through only, default = min thickness);
+   * drillIn the STI drill (default = charted drill). Inches, positive down from the top.
+   * Blind: full thread = Heli-Coil C (insert length + 1 P) → holeChain (tap Z = C + chamfer, drill = tap Z + max(1 P, .050"))
+   *   and the full-Ø drill depth is never less than Heli-Coil's published min "A" for plug / bottoming taps.
+   * Through: holeChain through on the part thickness; fits = thickness ≥ length + 1 P (countersunk).
+   */
+  function stiHole(t, x, chamfer, mode, pointDeg, thickIn, drillIn) {
+    const f = stiFor(t); if (!f) return null;
+    const i = STI_X.indexOf(Number(x)); if (i < 0) return null;
+    const R = DATA.STI_RULES, P = f.pitchIn, Q = x * f.majorIn, d = drillIn > 0 ? drillIn : (f.drill ? f.drill.dIn : 0);
+    const ch = CHAMFER[chamfer] ? chamfer : "plug", pt = pointDeg > 0 ? pointDeg : 118;
+    const rc = { tIn: Q + R.rcTPitch * P, sIn: Q + R.rcSPitch * P };
+    const below = { minIn: R.setdownCsk[0] * P, maxIn: R.setdownCsk[1] * P, noCskMinIn: R.setdownNoCsk[0] * P, noCskMaxIn: R.setdownNoCsk[1] * P };
+    if (mode === "through") {
+      const minT = Q + R.thruMinThickPitch * P, thick = thickIn > 0 ? thickIn : minT;
+      const h = holeChain({ mode: "through", depthIn: thick, pitchIn: P, drillIn: d, pointDeg: pt, chamfer: ch });
+      return { x, mode: "through", lenIn: Q, threadIn: thick, threadFrom: "part thickness", thickIn: thick, minThickIn: minT, minThickNoCskIn: Q,
+        fits: thick >= minT - 1e-9, tapZ: h.tapZ, drillFull: h.drillFull, drillZ: h.drillZ, holeIn: h.drillFull, pointIn: h.pointIn, chamferIn: h.chamferIn,
+        below, rc };
+    }
+    const C = f.C ? f.C[i] : Q + R.hcCPitch * P;
+    const h = holeChain({ mode: "blind", depthIn: C, pitchIn: P, drillIn: d, pointDeg: pt, chamfer: ch });
+    const A = f.A && (ch === "plug" || ch === "bottoming") ? f.A[ch][i] : null;
+    const full = A > h.drillFull ? A : h.drillFull;
+    return { x, mode: "blind", lenIn: Q, threadIn: C, threadFrom: f.C ? "Heli-Coil C" : "length + 1 P (Heli-Coil rule)",
+      tapZ: h.tapZ, chainDrillFull: h.drillFull, srcAIn: A, governs: A > h.drillFull ? "Heli-Coil A" : "app chain",
+      drillFull: full, drillZ: full + h.pointIn, holeIn: full, pointIn: h.pointIn, chamferIn: h.chamferIn, clearIn: full - h.tapZ,
+      below, rc };
+  }
+  /**
+   * Repair or scrap (Stacey): repair = insert + STI tap / holes per tap + minutes / 60 × rate.
+   * Missing inputs fall back to DATA.DEMO_REPAIR (sample numbers). Same shape as Maria's DT_REPAIR().
+   */
+  function stiRepair(o) {
+    const dm = DATA.DEMO_REPAIR || {}, g = (k) => (o && Number.isFinite(o[k]) && o[k] >= 0 ? o[k] : dm[k] || 0);
+    const ins = g("insert"), tap = g("tapCost"), life = Math.max(1, g("holesPerTap")), min = g("minutes"), rate = g("rate"), part = g("partCost");
+    const fixed = ins + tap / life, labor = (min / 60) * rate, rep = fixed + labor;
+    return { repair: rep, part, save: part - rep, breakEvenMin: rate > 0 ? ((part - fixed) / rate) * 60 : Infinity, ins, tapShare: tap / life, labor, min, rate };
+  }
+  const stiFmt = (vIn, units) => (units === "mm" ? (vIn * IN_MM).toFixed(2) + " mm" : vIn.toFixed(4).replace(/^0/, "") + '"');
+  /**
+   * Everything Maria's Inserts frame shows. null when FEATURES.inserts is off or no source covers the thread.
+   * S = app state (units, tapType, cls, hole, chamf, pt, depthIn) + optional insLen (1…3, default 1.5), stiLock (screw-locking),
+   * stiSteel (use Heli-Coil's steel/Mg/plastic drill), stiRpm (S word for the code; otherwise S? and F?).
+   */
+  function sti(t, S, opts) {
+    if (!stiOn()) return null;
+    const f = stiFor(t); if (!f || !f.drill) return null;
+    S = S || {}; opts = opts || {};
+    const units = S.units === "mm" ? "mm" : "in", R = DATA.STI_RULES, P = f.pitchIn;
+    const lock = !!S.stiLock, cls = f.inch ? (lock ? "3B" : (S.cls === "3B" ? "3B" : "2B")) : (lock ? "4H5H" : "5H");
+    const lockCls = cls === "3B" || cls === "4H5H";
+    // Drill: first charted drill that lands inside the STI minor band, in this order: Heli-Coil aluminum column (HC says
+    // it is inside the NASM33537 / MA1567 minor limits), Heli-Coil steel/Mg/plastic column, Recoil, Emuge. If none
+    // lands inside, the Heli-Coil drill stays (its footnote: standard drills vary slightly from the limits).
+    // S.stiSteel puts Heli-Coil's steel column first and keeps it even outside the band (HC sizes it larger on purpose).
+    const lim = stiLimits(t, cls), inBand = (x) => classCheck(lim, x.dIn, "cut").level === "green";
+    const hc = f.drills.filter((x) => x.src === "HC"), steel = S.stiSteel && hc[1] ? hc[1] : null;
+    const dr = steel || f.drills.find(inBand) || f.drill;
+    const others = f.drills.filter((x) => x !== dr && x.label !== dr.label).map((x) => ({ HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" }[x.src] + " " + x.label));
+    const srcName = { HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" }[dr.src];
+    const drill = { label: dr.label, dIn: dr.dIn, note: stiFmt(dr.dIn, units) + " · " + srcName + (dr.src === "HC" ? " (" + dr.use + ")" : "") + (others.length ? " · also " + others.join(", ") : ""), alts: f.drills };
+    // Tap
+    const base = f.inch ? t.label + "-" + cls : t.label + " " + cls;
+    const bot = S.chamf === "bottoming", pn = f.taps ? (bot ? (lockCls ? f.taps.botLock : f.taps.botFree) : (lockCls ? f.taps.plugLock : f.taps.plugFree)) : null;
+    const eg = !f.inch && /coarse/i.test(t.series || "") ? " (DIN 8140 EG M" + t.major + ")" : "";
+    const tap = { label: "STI " + base + eg, note: (pn ? "Heli-Coil " + (bot ? "bottoming " : "plug ") + pn + " · " : "") + (lockCls ? "screw-locking class" : "free-running class") + " · oversize tap sized for the insert" };
+    // Check: minor band + % thread on the STI thread
+    const cc = classCheck(lim, dr.dIn, "cut"), st = stiThread(t);
+    const pct = st ? pctFromDrill(st, "cut", inToNative(t, dr.dIn)) : NaN;
+    const band = units === "mm" ? (lim.minIn * IN_MM).toFixed(3) + "–" + (lim.maxIn * IN_MM).toFixed(3) + " mm" : lim.minIn.toFixed(4).replace(/^0/, "") + "–" + lim.maxIn.toFixed(4).replace(/^0/, "") + '"';
+    let check = { level: cc.level, text: cc.text + " (minor " + band + ")" + (Number.isFinite(pct) ? " · " + Math.round(pct) + "% thread" : ""), pct: Number.isFinite(pct) ? pct : null };
+    if (cc.level !== "green" && steel) check = { level: "amber", text: check.text + ". Heli-Coil sizes the steel/magnesium/plastic drill larger on purpose (material close-in, tap life): gauge the tapped hole.", pct: check.pct };
+    else if (cc.level !== "green" && f.footnote && dr.src === "HC") check.text += ". Heli-Coil footnote: a standard drill is suggested though it varies slightly from the minor limits; gauge the tapped hole.";
+    if (S.tapType === "form") check = { level: "amber", text: "These STI drills are for cut STI taps. A form STI tap needs a bigger drill: use the tap maker's chart.", pct: null };
+    // Lengths
+    const mode = S.hole === "through" ? "through" : "blind", ch = CHAMFER[S.chamf] ? S.chamf : "plug";
+    const thick = mode === "through" && S.depthIn > 0 ? S.depthIn : 0;
+    const holes = STI_X.map((x) => stiHole(t, x, ch, mode, S.pt, thick, dr.dIn));
+    const code1 = (h) => {
+      const z = zWord(h.tapZ, units), rpm = opts.rpm > 0 ? opts.rpm : S.stiRpm > 0 ? S.stiRpm : 0;
+      const pTxt = units === "mm" ? (P * IN_MM).toFixed(4).replace(/0+$/, "").replace(/\.$/, "") + " mm" : P.toFixed(5).replace(/0+$/, "").replace(/^0/, "") + '"';
+      const head = "(" + tap.label + " " + h.x + "xD, F = S x " + pTxt + ")";
+      if (rpm > 0) { const fb = fanucBlock(Math.round(rpm), t, units, h.tapZ); return [head].concat(fb.lines); }
+      return [head, units === "mm" ? "G21 (MM)" : "G20 (INCH)", "M29 S?", "G84 X? Y? " + z + " R? F?", "G80"];
+    };
+    const lengths = holes.map((h) => ({ x: h.x, lenIn: h.lenIn, holeIn: h.holeIn, tapZIn: h.tapZ, threadIn: h.threadIn, drillZIn: h.drillZ, fits: h.fits !== false, code: code1(h), hole: h }));
+    const xSel = STI_X.indexOf(Number(S.insLen)) >= 0 ? Number(S.insLen) : 1.5, sel = lengths.find((r) => r.x === xSel);
+    const below = sel.hole.below;
+    const sink = f.sink ? { deg: f.sink.deg, diaIn: f.sink.minIn, maxIn: f.sink.maxIn } : { deg: R.cskDeg, diaIn: null, maxIn: null };
+    const big = f.majorIn > (f.inch ? R.tangToolMaxIn : R.tangToolMaxMm / IN_MM) + 1e-9;
+    const install = [
+      "Drill " + dr.label + " (" + stiFmt(dr.dIn, units) + ") to " + stiFmt(sel.holeIn, units) + " full Ø" + (mode === "blind" ? " (drill Z " + stiFmt(sel.drillZIn, units) + " with the point)" : " through") + ".",
+      "Countersink " + R.cskDeg + "° ±" + R.cskTolDeg + "°" + (f.sink ? " to " + stiFmt(f.sink.minIn, units).replace(/"$/, "") + "–" + stiFmt(f.sink.maxIn, units) + " Ø" : "") + ". It stops a feather edge and guides the insert in.",
+      "Tap " + tap.label + (mode === "blind" ? " to " + stiFmt(sel.threadIn, units) + " full thread (tap Z " + stiFmt(sel.tapZIn, units) + ")" : " through") + ".",
+      "Blow out the chips. Check the hole with an STI GO/NO-GO plug gauge.",
+      "Wind the " + (lock ? "screw-locking" : "free-running") + " insert in with the inserting tool" + (lock ? " (Recoil: locking inserts need the prewinder tool)" : "") + " until the top coil is " + stiFmt(below.minIn, units).replace(/"$/, "") + "–" + stiFmt(below.maxIn, units) + " below the top (3/4–1-1/2 pitch; 1/4–1/2 pitch if there is no countersink).",
+      big ? "Break off the tang with long-nose pliers: bend it up and down until it snaps at the notch. Tangless inserts skip this." : "Break off the tang with the tang break-off tool (one sharp tap). Tangless inserts skip this.",
+    ];
+    if (mode === "through" && !sel.fits) install.unshift("Part is thinner than the " + xSel + "×D insert + 1 pitch (" + stiFmt(sel.hole.minThickIn, units) + "). Pick a shorter insert.");
+    const src = f.srcKeys.concat(["NASA"]).map((k) => DATA.STI_SRC[k]);
+    return { drill, tap, check, lengths, x: xSel, belowTopIn: below.minIn, belowTop: below, sink, code: sel.code, install, src, cls, lock, limits: lim, sti: f };
+  }
+
   const API = {
     IN_MM, K, PCT_LIMIT, PCT_LOW, TAPER_INFO, findThread, pipeDrill, pitchIn, pitchMm, majorIn, tapDrillExact, pctFromDrill,
     pctStatus, nearestDrills, tapDrill, recommend, hrcToHb, hbToHrc, rpmFromSfm, sfmFromRpm,
     rpmFromMmin, mminFromRpm, interp, material, drillStart, peckAdvice, tapStart, rigidFeed, fWord,
     fanucBlock, drillBlock, snappedTapCost, per1000, minorLimits, classCheck, clearance, pointLen, CHAMFER, BLIND_CLEAR_MIN_IN, holeChain, zWord,
-    nextDrillUp, troubleChecks,
+    nextDrillUp, troubleChecks, STI_X, stiDrillIn, stiFor, stiLimits, stiThread, stiHole, stiRepair, sti,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.DT_CALC = API;

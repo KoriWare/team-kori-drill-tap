@@ -268,4 +268,67 @@ t("troubleChecks: tension/compression holder → amber; class over max → overs
   assert.strictEqual(chk(o, "oversize-8").sev, "red");
   assert.strictEqual(chk(C.troubleChecks(tcCtx({ chamf: "bottoming" })), "finish-4").sev, "amber");
 });
+// --- STI (helical coil inserts): Heli-Coil HC2000 Rev.12, Recoil 2020, Emuge ZS10013
+const stiS = { units: "in", tapType: "cut", cls: "2B", hole: "blind", chamf: "plug", pt: 118, depthIn: 0.375 };
+t("STI 1/4-20 matches the Heli-Coil chart (Tables V, VII, IX) + Recoil/Emuge alternates", () => {
+  const f = C.stiFor(th("UNC-1/4-20"));
+  assert.equal(f.drill.label, "H"); near(f.drill.dIn, 0.266, 1e-9, "H");
+  near(f.minor.minIn, 0.2608, 1e-9, "minor min"); near(f.minor.maxIn, 0.2704, 1e-9, "minor max");
+  near(f.pd.minIn, 0.2825, 1e-9, "pd min"); near(f.pd.maxLockIn, 0.2851, 1e-9, "3B max"); near(f.pd.maxFreeIn, 0.2864, 1e-9, "2B max");
+  near(f.sink.minIn, 0.31, 1e-9, "csk"); near(f.sink.maxIn, 0.34, 1e-9, "csk"); assert.equal(f.sink.deg, 120);
+  assert.deepEqual(f.C, [0.3, 0.43, 0.55, 0.68, 0.8]); near(f.A.plug[0], 0.675, 1e-9, "A plug 1D"); near(f.A.bottoming[0], 0.45, 1e-9, "A bot 1D");
+  assert.equal(f.taps.plugFree, "4CPA"); assert.equal(f.taps.plugLock, "4CPB");
+  assert(f.drills.some((d) => d.src === "RC" && d.label === "17/64") && f.drills.some((d) => d.src === "EM" && d.label === "6.7 mm"));
+  near(f.majorMinIn, 0.315, 1e-9, "STI major min (Recoil)");
+  const lim = C.stiLimits(th("UNC-1/4-20"), "3B"); assert.equal(lim.cls, "STI 3B"); assert.equal(C.classCheck(lim, 0.266, "cut").level, "green");
+  near(C.pctFromDrill(C.stiThread(th("UNC-1/4-20")), "cut", 0.266), 75.4, 0.1, "% thread on the STI thread");
+});
+t("STI 1/4-20 hole chain: C + chamfer, max(1P, .050\"), never shallower than Heli-Coil A", () => {
+  const T = th("UNC-1/4-20"), pl = C.stiHole(T, 1.5, "plug", "blind", 118);
+  near(pl.lenIn, 0.375, 1e-9, "Q"); near(pl.threadIn, 0.43, 1e-9, "C"); near(pl.tapZ, 0.63, 1e-9, "tap Z");
+  near(pl.chainDrillFull, 0.68, 1e-9, "chain"); near(pl.srcAIn, 0.8, 1e-9, "A"); assert.equal(pl.governs, "Heli-Coil A");
+  near(pl.drillZ, 0.8 + C.pointLen(0.266, 118), 1e-9, "drill Z");
+  const bt = C.stiHole(T, 1, "bottoming", "blind", 118);
+  near(bt.tapZ, 0.4, 1e-9, "bot tap Z"); near(bt.drillFull, 0.45, 1e-9, "bot = A = chain");
+  near(pl.below.minIn, 0.0375, 1e-9, "3/4 P set-down"); near(pl.below.maxIn, 0.075, 1e-9, "1-1/2 P");
+  near(pl.rc.tIn, 0.375 + 3.5 * 0.05, 1e-9, "Recoil T"); near(pl.rc.sIn, 0.375 + 4.5 * 0.05, 1e-9, "Recoil S");
+  const th1 = C.stiHole(T, 2, "plug", "through", 118, 0.5); assert.strictEqual(th1.fits, false); near(th1.minThickIn, 0.55, 1e-9, "Q + 1P");
+});
+t("STI M8x1.25 (metric): 8.3 mm drill, minor 8.271–8.483, .050\" clearance beats Heli-Coil A for bottoming", () => {
+  const T = th("M8x1.25"), f = C.stiFor(T);
+  assert.equal(f.drill.label, "8.3 mm"); near(f.minor.minIn * 25.4, 8.271, 1e-9, "min"); near(f.minor.maxIn * 25.4, 8.483, 1e-9, "max");
+  near(f.pd.minIn * 25.4, 8.812, 1e-9, "pd typo 8..812 read as 8.812");
+  const h = C.stiHole(T, 1, "bottoming", "blind", 118);
+  near(h.threadIn * 25.4, 9.3, 1e-9, "C"); near(h.tapZ * 25.4, 11.8, 1e-9, "tap Z");
+  near(h.drillFull * 25.4, 11.8 + 1.27, 1e-9, "max(1.25 mm, .050\")"); assert.equal(h.governs, "app chain"); near(h.srcAIn * 25.4, 13.0, 1e-9, "A");
+  const r = C.sti(T, Object.assign({}, stiS, { units: "mm" }));
+  assert.equal(r.check.level, "green"); assert(/EG M8/.test(r.tap.label) && /5H/.test(r.tap.label), r.tap.label);
+  assert(/^G84 X\? Y\? Z-\d+\.\d{3} R\? F\?$/.test(r.code[3]), r.code[3]); assert.equal(r.code[2], "M29 S?");
+});
+t("DT_CALC.sti shape for every STI row (Maria's frame) and null where nothing is sourced", () => {
+  const ids = Object.keys(D.STI); assert.equal(ids.length, 86);
+  for (const id of ids) {
+    const r = C.sti(th(id), stiS); assert(r, id);
+    assert(r.drill.label && r.drill.dIn > 0 && r.tap.label && ["green", "amber", "red"].includes(r.check.level), id);
+    assert.deepEqual(r.lengths.map((l) => l.x), [1, 1.5, 2, 2.5, 3], id);
+    for (const l of r.lengths) assert(l.lenIn > 0 && l.tapZIn > l.lenIn && l.holeIn > l.tapZIn - 1e-9, id + " " + l.x);
+    assert(r.belowTopIn > 0 && r.sink.deg === 120 && r.install.length >= 6 && r.code.length >= 4, id);
+    assert(r.src.length >= 2 && r.src.every((q) => /^https:\/\//.test(q.url)), id);
+  }
+  for (const id of ["UNEF-1/4-32", "NPT-1/4", "M1x0.25", "UNC-2-4.5", "M6x0.75"]) assert.strictEqual(C.sti(th(id), stiS), null, id);
+  const rpm = C.sti(th("UNC-1/4-20"), stiS, { rpm: 600 }); assert(rpm.code.includes("M29 S600") && rpm.code.some((l) => / F30\.?$/.test(l)), rpm.code.join("|"));
+});
+t("FEATURES.inserts=false → DT_CALC.sti returns null (launch without Inserts)", () => {
+  assert.strictEqual(D.FEATURES.inserts, true);
+  D.FEATURES.inserts = false;
+  try { assert.strictEqual(C.sti(th("UNC-1/4-20"), stiS), null); } finally { D.FEATURES.inserts = true; }
+  assert(C.sti(th("UNC-1/4-20"), stiS));
+});
+t("stiRepair (Stacey, DEMO sample): $15.73 repair vs $40 part, saves $24.27, break-even 27 min", () => {
+  const r = C.stiRepair({ insert: 1.5, tapCost: 30, holesPerTap: 500, minutes: 10, rate: 85, partCost: 40 });
+  assert.equal(r.repair.toFixed(2), "15.73"); assert.equal(r.save.toFixed(2), "24.27");
+  near(r.breakEvenMin, 27.13, 0.01, "break-even"); assert.equal(Math.floor(r.breakEvenMin), 27);
+  assert.equal(C.stiRepair({}).repair.toFixed(2), "15.73", "defaults = DATA.DEMO_REPAIR");
+  const at = C.stiRepair({ minutes: r.breakEvenMin }); near(at.save, 0, 1e-9, "saves nothing at break-even");
+});
 console.log("\n" + n + " tests passed");
