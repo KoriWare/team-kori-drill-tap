@@ -408,6 +408,14 @@
   }
   function tapOwnInput() { S.tapOwn = num($("tap-ov")) > 0; renderTap(); }
 
+  function copyCode(b) {
+    const el = $(b.dataset.copy), txt = el.innerText.trim();
+    const done = (ok) => { b.textContent = ok ? "Copied ✓" : "Copy failed"; b.classList.toggle("ok", ok); clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = "Copy"; b.classList.remove("ok"); }, 1600); };
+    if (!txt || txt === "—") return done(false);
+    const fallback = () => { const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (e) {} ta.remove(); done(ok); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(() => done(true), fallback); else fallback();
+  }
+
   function renderDrill() {
     if (S.dLinked && lastRec) S.dDiaIn = lastRec.dIn;
     if (document.activeElement !== $("d-dia")) $("d-dia").value = S.units === "mm" ? (S.dDiaIn * IN_MM).toFixed(2) : S.dDiaIn.toFixed(4);
@@ -418,6 +426,7 @@
       ids.forEach((i) => { $(i).textContent = "—"; $(i + "-s").textContent = ""; });
       $("d-rpm-s").textContent = ds.blocked ? "blocked · see note below" : "see note below";
       setChip($("d-chip"), ds.blocked ? "red" : "amber", ds.blocked ? "Blocked" : "No data");
+      $("d-code").textContent = "—";
       infoLines($("d-info"), [{ c: ds.blocked ? "bad" : "warn", t: ds.reason }]);
       return;
     }
@@ -431,7 +440,10 @@
     $("d-ipm").innerHTML = mm ? Math.round(ds.ipm * IN_MM) + " <small>mm/min</small>" : ds.ipm.toFixed(1) + " <small>ipm</small>";
     $("d-ipm-s").textContent = "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
     setChip($("d-chip"), ds.peck.level, ds.peck.text.split(":")[0].split(".")[0]);
+    const db = C.drillBlock(ds, S.units);
+    $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>')).join("<br>");
     const lines = [{ c: ds.peck.level === "green" ? "" : ds.peck.level === "amber" ? "warn" : "bad", t: ds.peck.text + (ds.peck.q ? " Q = " + len(ds.peck.q) + "." : "") }];
+    lines.push("Fill in X Y (hole position), Z (depth incl. drill point) and R (retract plane)." + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
     lines.push("Depth " + ds.ld.toFixed(1) + "×D. Low end used; the high end is the most aggressive published value (info only).");
     if (ds.sfmStart) lines.push("Haas 'starting' SFM for this insert drill: " + (mm ? Math.round(ds.sfmStart / D.M_TO_SFM) + " m/min" : Math.round(ds.sfmStart) + " SFM") + ".");
     ds.notes.forEach((n) => lines.push({ c: "warn", t: n }));
@@ -548,6 +560,7 @@
     $("pct").oninput = renderAll;
     $("mat").onchange = () => { setHardFromHB(C.material($("mat").value).defaultHB); $("hard-note").textContent = hardNote(); renderAll(); };
     $("hard").oninput = () => { $("hard-note").textContent = hardNote(); renderAll(); };
+    document.querySelectorAll(".copybtn").forEach((b) => { b.onclick = () => copyCode(b); });
     $("tapmat").onchange = renderTap; $("tap-ov").oninput = tapOwnInput; $("tap-ov").onblur = renderTap;
     $("tap-ov-hint").onclick = (e) => { if (!e.target.closest("#tap-ov-reset")) return; e.preventDefault(); S.tapOwn = false; renderTap(); };
     $("drillmat").onchange = renderDrill;

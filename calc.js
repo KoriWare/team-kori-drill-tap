@@ -348,6 +348,19 @@
     };
   }
 
+  // Drill canned cycle from the peck advice: G81 (no peck), G73 (chip-break), G83 (full retract).
+  function drillBlock(ds, units) {
+    const mm = units === "mm";
+    const m = /\b(G8[13]|G73)\b/.exec(ds.peck.text);
+    const cyc = m ? m[1] : (ds.peck.q ? "G83" : "G81");
+    const q = cyc === "G81" || !ds.peck.q ? "" : " Q" + (mm ? (ds.peck.q * IN_MM).toFixed(3) : ds.peck.q.toFixed(4));
+    const f = mm ? String(Math.round(ds.ipm * IN_MM)) : ds.ipm.toFixed(1);
+    return {
+      cycle: cyc,
+      lines: [mm ? "G21 (MM)" : "G20 (INCH)", "S" + ds.rpm + " M03", cyc + " X___ Y___ Z___ R___" + q + " F" + f, "G80"],
+    };
+  }
+
   // ------------------------------------------------------------------ cost
   function snappedTapCost(o) {
     return o.taps * (o.tapCost + o.partValue + (o.lostMin / 60) * o.shopRate);
@@ -363,7 +376,7 @@
     IN_MM, K, PCT_LIMIT, PCT_LOW, TAPER_INFO, findThread, pipeDrill, pitchIn, pitchMm, majorIn, tapDrillExact, pctFromDrill,
     pctStatus, nearestDrills, tapDrill, recommend, hrcToHb, hbToHrc, rpmFromSfm, sfmFromRpm,
     rpmFromMmin, mminFromRpm, interp, material, drillStart, peckAdvice, tapStart, rigidFeed, fWord,
-    fanucBlock, snappedTapCost, per1000,
+    fanucBlock, drillBlock, snappedTapCost, per1000,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.DT_CALC = API;

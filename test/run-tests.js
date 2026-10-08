@@ -96,4 +96,11 @@ t("drill + tap starts return numbers; HSS blocked over 35 HRC", () => {
   const ts = C.tapStart("low_c", "cut", "hss", 126, th("UNC-1/4-20")); assert(ts.ok && ts.rpm > 0);
   assert(C.tapStart("ci_gray", "form", "hss", 200, th("UNC-1/4-20")).blocked);
 });
+t("drill block: G81 shallow, G73 3-5xD HSS with Q, G83 deep, indexable never pecks", () => {
+  const a = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.5), "in"); assert.equal(a.cycle, "G81"); assert(/^G81 X___ Y___ Z___ R___ F\d+\.\d$/.test(a.lines[2]), a.lines[2]);
+  const b = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.8), "in"); assert.equal(b.cycle, "G73"); assert(/ Q0\.2010 F/.test(b.lines[2]), b.lines[2]);
+  const c = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 1.4), "in"); assert.equal(c.cycle, "G83"); assert(/ Q0\.1005 F/.test(c.lines[2]), c.lines[2]);
+  const d = C.drillBlock(C.drillStart("low_c", "indexable", 126, 0.75, 3), "in"); assert.equal(d.cycle, "G81"); assert(!/Q/.test(d.lines[2]));
+  const e = C.drillBlock(C.drillStart("low_c", "hss", 126, 0.201, 0.8), "mm"); assert(/ Q5\.105 F\d+$/.test(e.lines[2]), e.lines[2]); assert.equal(e.lines[0], "G21 (MM)");
+});
 console.log("\n" + n + " tests passed");
