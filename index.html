@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=hlp1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=hlp1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=hlp1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=hlp1" />
-  <link rel="stylesheet" href="styles.css?v=sa1" />
+  <link rel="manifest" href="manifest.webmanifest?v=ds1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=ds1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=ds1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=ds1" />
+  <link rel="stylesheet" href="styles.css?v=ds1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -49,7 +49,7 @@
         <p><b>6. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Fill in X Y (hole position), Z (depth; include the drill point on drills) and R (retract plane). <b>Copy</b> above each box copies the whole block.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
-        <p><b>DEMO $</b> (gold, bottom) uses sample costs only — change them to your shop's numbers.</p>
+        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Type your own to estimate. They stay on your device and aren't in the share link.</p>
         <p><b>On a PC</b> the tap and drill panels sit side by side. <b>On a phone</b>, add it to your Home Screen and it works offline after the first visit.</p>
       </details>
     </section>
@@ -172,7 +172,7 @@
         <label class="toggle"><input type="checkbox" id="demo-on" checked /> show</label>
       </div>
       <div id="demo-body">
-        <div class="info">Sample numbers only (Stacey's DEMO). Type your shop's real costs.</div>
+        <div class="info">Sample numbers only. Type your own to estimate. They stay on your device and aren't in the share link.</div>
         <div class="row">
           <label class="field"><div class="lbl">Part value $</div><input id="c-part" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field"><div class="lbl">Lost time min</div><input id="c-min" type="number" inputmode="decimal" min="0" step="any" /></label>
@@ -224,8 +224,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=hlp1"></script>
-<script src="calc.js?v=hlp1"></script>
-<script src="app.js?v=hlp1"></script>
+<script src="data.js?v=ds1"></script>
+<script src="calc.js?v=ds1"></script>
+<script src="app.js?v=ds1"></script>
 </body>
 </html>
