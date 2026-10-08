@@ -85,6 +85,7 @@
     const sec = $("ins-acc").closest("section"); sec.hidden = !show;
     const sw = $("ins-sw"); if (sw) sw.hidden = !show;
     const chip = $("ins-chip"); if (chip) chip.hidden = !show || !window.DT_INSERT;
+    const jb = $("ins-jump"); if (jb) jb.hidden = !show || !window.DT_INSERT;
     const was = window.DT_INSERT_AVAIL; window.DT_INSERT_AVAIL = show;
     if (was !== show) document.dispatchEvent(new CustomEvent("dt:insert", { detail: { on: !!window.DT_INSERT } }));
     if (!show) return;
@@ -126,6 +127,7 @@
     const cb = $("ins-on"); if (cb) cb.checked = !!on;
     document.body.classList.toggle("is-ins", !!on);
     const chip = $("ins-chip"); if (chip) chip.hidden = !on || window.DT_INSERT_AVAIL === false;
+    const jb = $("ins-jump"); if (jb) jb.hidden = !on || window.DT_INSERT_AVAIL === false;
     const note = $("ins-note");
     const ready = window.DT_CALC && typeof window.DT_CALC.sti === "function";
     if (note) { note.textContent = on ? (ready ? "STI sizes for this thread are open in Inserts below" : "Inserts section is open below · STI sizes on the way from Jenny") : NOTE_OFF; note.className = on && !ready ? "wait" : ""; }
@@ -140,6 +142,7 @@
     let on = false; try { on = localStorage.getItem("dt-ins") === "1"; } catch (e) {}
     setIns(on, false);
     const cb = $("ins-on"); if (cb) cb.addEventListener("change", () => { setIns(cb.checked); if (cb.checked) { const acc = $("ins-acc"); if (acc) acc.open = true; } });
+    const jump = $("ins-jump"); if (jump) jump.addEventListener("click", () => { const a = $("ins-acc"); if (!a) return; a.open = true; a.closest("section").scrollIntoView({ behavior: "smooth", block: "start" }); });
     const acc = $("ins-acc");
     if (acc) { try { acc.open = localStorage.getItem("dt-ins-open") === "1" || on; } catch (e) {} acc.addEventListener("toggle", () => { try { localStorage.setItem("dt-ins-open", acc.open ? "1" : "0"); } catch (e) {} }); }
     const cz = $("ins-chart"); if (cz) cz.addEventListener("click", (e) => { const b = e.target.closest("[data-chart]"); if (!b) return; chart = b.dataset.chart; try { localStorage.setItem("dt-ins-chart", chart); } catch (er) {} renderSection(); });
