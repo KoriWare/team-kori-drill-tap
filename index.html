@@ -9,16 +9,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg" />
-  <link rel="apple-touch-icon" href="icon.svg" /><!-- PLACEHOLDER: Maria to supply apple-touch-icon.png -->
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.webmanifest?v=mf1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=mf1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=mf1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=mf1" />
+  <link rel="stylesheet" href="styles.css?v=mf1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
 <div class="wrap">
   <header>
-    <div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 1v12M6 4h8M6 7h8M6 10h8" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round"/><path d="M10 13l-2.5 5h5z" fill="#e8894a"/></svg></div>
+    <div class="logo" aria-hidden="true"><img src="icon.svg?v=mf1" width="34" height="34" alt="" /></div>
     <h1>Drill <span>&amp;</span> Tap</h1>
     <div class="units" role="group" aria-label="Length units">
       <button type="button" id="u-in" class="on" aria-pressed="true">in</button><span class="sep">|</span><button type="button" id="u-mm" aria-pressed="false">mm</button>
@@ -30,7 +31,7 @@
     <section class="panel help">
       <details class="acc">
         <summary><span class="lbl">? Help · how to use</span></summary>
-        <p><b>1. Pick a thread.</b> The most-used sizes are pinned at the top; every UNC, UNF, UNEF, ISO metric, NPT, BSPT and BSPP size is below, grouped by series.</p>
+        <p><b>1. Pick a thread.</b> Tap the size and start typing — <code>1/4-20</code>, <code>m6</code>, <code>1/2 npt</code> or a diameter like <code>.375</code> all work. Your recent picks and the most-used sizes are pinned at the top; every UNC, UNF, UNEF, ISO metric, NPT, BSPT and BSPP size is below, grouped by series.</p>
         <p><b>2. Cut or form tap.</b> A cut tap cuts the thread out. A form tap pushes the metal into shape (no chips), so it needs a <b>bigger</b> drill. Default % thread: 75% cut, 65% form. You can type 50–100%.</p>
         <p><b>3. Read the drill.</b> You get the exact drill size, the nearest standard drills just under and just over (fraction / number / letter and metric), and the real % thread each one gives.</p>
         <ul>
@@ -49,7 +50,11 @@
     <section class="panel" aria-labelledby="thread-lbl">
       <div class="lbl" id="thread-lbl">Thread</div>
       <div class="row">
-        <label class="field" style="flex:2"><div class="lbl">Size</div><select id="thread"></select></label>
+        <div class="field tp-field" style="flex:2">
+          <div class="lbl" id="thread-size-lbl">Size · tap to search</div>
+          <button type="button" id="thread-btn" class="tp-btn" aria-haspopup="dialog" aria-controls="tp" aria-labelledby="thread-size-lbl thread-btn-txt"><span id="thread-btn-txt">—</span><span class="tp-meta" id="thread-btn-meta"></span></button>
+          <select id="thread" hidden tabindex="-1" aria-hidden="true"></select>
+        </div>
         <label class="field" id="pct-field"><div class="lbl">% Thread</div><input id="pct" type="number" inputmode="decimal" min="50" max="100" step="1" value="75" /></label>
       </div>
       <div class="seg" role="group" aria-label="Tap type">
@@ -61,7 +66,7 @@
     <!-- HOLE / TAP DRILL -->
     <section class="panel hero" aria-labelledby="xs-lbl">
       <div class="lbl" id="xs-lbl">Hole cross-section · live</div>
-      <svg id="xsec" viewBox="0 0 358 240" role="img" aria-label="Hole cross-section"></svg>
+      <svg id="xsec" viewBox="0 0 358 240" width="358" height="240" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Hole cross-section"></svg>
       <div class="readouts">
         <div class="ro c"><div class="lbl">Tap drill</div><div class="v" id="r-drill">—</div><div class="s" id="r-drill-s"></div></div>
         <div class="ro t"><div class="lbl" id="r-pct-lbl">Actual thread</div><div class="v" id="r-pct">—</div><div class="s" id="r-pct-s"></div></div>
@@ -188,8 +193,22 @@
 
   <footer>Team Kori · Shop Tools · Starting points only — always check your tool maker's chart.</footer>
 </div>
-<script src="data.js"></script>
-<script src="calc.js"></script>
-<script src="app.js"></script>
+<!-- THREAD PICKER (type-to-search) -->
+<div class="tp" id="tp" hidden>
+  <div class="tp-scrim" data-close></div>
+  <div class="tp-sheet" role="dialog" aria-modal="true" aria-labelledby="tp-title">
+    <div class="tp-grab" aria-hidden="true"></div>
+    <div class="tp-hd"><div class="lbl" id="tp-title">Thread size · <span id="tp-count">—</span></div><button type="button" class="tp-x" data-close aria-label="Close thread picker">✕</button></div>
+    <div class="tp-search">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#2dd4bf" stroke-width="1.8"/><path d="M11 11l3.5 3.5" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="tp-q" type="search" placeholder="1/4-20, M6, 1/2 NPT, .375…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" role="combobox" aria-expanded="true" aria-controls="tp-list" aria-autocomplete="list" />
+    </div>
+    <div class="tp-filt" id="tp-filt" role="group" aria-label="Filter by family"></div>
+    <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
+  </div>
+</div>
+<script src="data.js?v=mf1"></script>
+<script src="calc.js?v=mf1"></script>
+<script src="app.js?v=mf1"></script>
 </body>
 </html>
