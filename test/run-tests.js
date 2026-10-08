@@ -344,4 +344,88 @@ t("stiRepair (Stacey, DEMO sample): $15.73 repair vs $40 part, saves $24.27, bre
   assert.equal(C.stiRepair({}).repair.toFixed(2), "15.73", "defaults = DATA.DEMO_REPAIR");
   const at = C.stiRepair({ minutes: r.breakEvenMin }); near(at.save, 0, 1e-9, "saves nothing at break-even");
 });
+// --- STI chart picker (S.stiChart): values from the chosen chart, Heli-Coil borrowed + flagged where it doesn't publish
+const pick = (id, ch, x) => C.sti(th(id), Object.assign({}, stiS, { stiChart: ch, insLen: x || 1 }));
+t("STI pick HC (default): 1/4-20 → Heli-Coil H .2660, 1×D plug drill depth .675 (HC A, p.20)", () => {
+  for (const r of [pick("UNC-1/4-20", "HC"), C.sti(th("UNC-1/4-20"), Object.assign({}, stiS, { insLen: 1 }))]) {
+    assert.strictEqual(r.chartUsed, "HC"); assert.strictEqual(r.drill.label, "H"); near(r.drill.dIn, 0.266, 1e-4, "H");
+    near(r.lengths[0].holeIn, 0.675, 1e-6, "HC A 1xD plug"); assert.strictEqual(r.lengths[0].depthSrc, "HC");
+    assert.strictEqual(r.src[0].name, D.STI_SRC.HC.name);
+    assert(!r.borrowed.some((b) => /^depths/.test(b)), "HC depths are its own");
+  }
+  const r = pick("UNC-1/4-20", "HC");
+  assert.deepStrictEqual(r.charts.map((c) => [c.src, c.drillLabel]), [["HC", "H"], ["RC", "17/64"], ["EM", "6.7 mm"]]);
+  assert.strictEqual(r.disagree, true); // H .2660 vs 17/64 .2656 vs 6.7 mm .2638, and A .675 vs Recoil S .475
+  assert(r.charts.every((c) => typeof c.name === "string" && c.dIn > 0 && typeof c.inBand === "boolean" && /^(green|amber|red)$/.test(c.level)));
+});
+t("STI pick RC: 1/4-20 → Recoil 17/64, Recoil 1×D depths S .475 / T .425 (p.20), countersink Ø borrowed", () => {
+  const r = pick("UNC-1/4-20", "RC");
+  assert.strictEqual(r.chartUsed, "RC"); assert.strictEqual(r.drill.label, "17/64"); assert.strictEqual(r.drill.src, "RC");
+  near(r.lengths[0].holeIn, 0.475, 1e-6, "Recoil S"); near(r.lengths[0].tapZIn, 0.425, 1e-6, "Recoil T");
+  assert.strictEqual(r.lengths[0].depthSrc, "RC"); assert.strictEqual(r.limits.chart, "RC"); near(r.limits.minIn, 0.261, 1e-6, "RC minor");
+  assert.strictEqual(r.src[0].name, D.STI_SRC.RC.name);
+  assert(r.borrowed.some((b) => /countersink Ø from Heli-Coil/.test(b)), "countersink borrowed");
+  assert(!r.borrowed.some((b) => /^depths/.test(b)), "Recoil depths are its own");
+  assert(/Z-0?\.4250/.test(r.lengths[0].code.join("\n")), "code uses Recoil T");
+  // Recoil bottoming / UNF / typo cells borrow Heli-Coil and say so
+  const b = C.sti(th("UNC-1/4-20"), Object.assign({}, stiS, { stiChart: "RC", chamf: "bottoming", insLen: 1 }));
+  near(b.lengths[0].holeIn, 0.45, 1e-6, "HC bottoming A"); assert(b.borrowed.some((x) => /plug taps only/.test(x)));
+  const u = pick("UNF-1/4-28", "RC");
+  assert.strictEqual(u.chartUsed, "RC"); assert.strictEqual(u.lengths[0].depthSrc, "HC"); assert(u.borrowed.some((x) => /UNF depth table on p\.21/.test(x)));
+  const ty = pick("UNC-1-1/2-6", "RC");
+  assert.strictEqual(ty.lengths[0].depthSrc, "HC"); assert.strictEqual(ty.lengths[1].depthSrc, "RC"); assert(ty.borrowed.some((x) => /1×D value is a typo/.test(x)));
+  const m = pick("M12x1.5", "RC");
+  assert.strictEqual(m.chartUsed, "HC"); assert(m.borrowed.some((x) => /M12 × 1\.5 row on p\.22 is garbled/.test(x)));
+});
+t("STI pick EM: 1/4-20 → Emuge 6.7 mm; depths, set-down and countersink Ø borrowed from Heli-Coil and flagged", () => {
+  const r = pick("UNC-1/4-20", "EM");
+  assert.strictEqual(r.chartUsed, "EM"); assert.strictEqual(r.drill.label, "6.7 mm"); near(r.drill.dIn, 6.7 / 25.4, 1e-9, "6.7 mm");
+  near(r.lengths[0].holeIn, 0.675, 1e-6, "HC A borrowed"); assert.strictEqual(r.lengths[0].depthSrc, "HC");
+  assert(r.borrowed.indexOf("depths from Heli-Coil (Emuge doesn't publish)") >= 0, JSON.stringify(r.borrowed));
+  assert(r.borrowed.some((b) => /set-down from Heli-Coil/.test(b)) && r.borrowed.some((b) => /countersink Ø from Heli-Coil/.test(b)));
+  assert.deepStrictEqual(r.src.slice(0, 2).map((s) => s.name), [D.STI_SRC.EM.name, D.STI_SRC.HC.name]);
+  assert.strictEqual(r.check.level, "green"); assert(/Emuge minor/.test(r.check.text));
+});
+t("STI pick: HC-only size (#1-64) → charts length 1, disagree false, asked chart falls back to HC; #5-44 falls back to Recoil", () => {
+  for (const ch of ["HC", "RC", "EM"]) {
+    const r = pick("UNC-#1-64", ch);
+    assert.strictEqual(r.charts.length, 1); assert.strictEqual(r.disagree, false); assert.strictEqual(r.chartUsed, "HC");
+    assert.strictEqual(r.chartAsked, ch); assert.strictEqual(r.borrowed.some((b) => /has no chart for this size/.test(b)), ch !== "HC");
+  }
+  const r = pick("UNF-#5-44", "HC");
+  assert.strictEqual(r.chartUsed, "RC"); assert(r.borrowed.some((b) => /Heli-Coil has no chart/.test(b)));
+});
+t("STI pick RC: #12-24 → Recoil 15/64 is red against Recoil's own band (.2250–.2300\"); Heli-Coil #1 in band", () => {
+  const r = pick("UNC-#12-24", "RC");
+  assert.strictEqual(r.drill.label, "15/64"); assert.strictEqual(r.check.level, "red"); assert.strictEqual(r.drill.inBand, false);
+  assert(/In-band alternates: Heli-Coil #1/.test(r.drill.note), r.drill.note);
+  const rc = r.charts.find((c) => c.src === "RC"), hc = r.charts.find((c) => c.src === "HC");
+  assert.strictEqual(rc.level, "red"); assert.strictEqual(rc.inBand, false); assert.strictEqual(hc.drillLabel, "#1"); assert.strictEqual(hc.level, "green");
+  assert.strictEqual(r.disagree, true);
+});
+t("STI pick: every size and chart returns chartUsed / charts / disagree / borrowed; chosen chart first in src", () => {
+  for (const id in D.STI) for (const ch of ["HC", "RC", "EM"]) {
+    const r = pick(id, ch, 1.5);
+    assert(r && ["HC", "RC", "EM"].indexOf(r.chartUsed) >= 0 && Array.isArray(r.charts) && r.charts.length >= 1 && typeof r.disagree === "boolean" && Array.isArray(r.borrowed), id + " " + ch);
+    assert.strictEqual(r.src[0].name, D.STI_SRC[r.chartUsed].name, id + " " + ch);
+    assert(r.charts.some((c) => c.src === r.chartUsed && c.drillLabel === r.drill.label) || (r.chartUsed === "HC" && ch === "HC"), id + " " + ch);
+    if (r.charts.length === 1) assert.strictEqual(r.disagree, false, id);
+    r.lengths.forEach((l) => assert(l.holeIn > l.tapZIn && Array.isArray(l.code), id + " " + ch));
+  }
+});
+
+t("STI fill map: EM on 1/4-20 names every Heli-Coil-borrowed field; HC fill is {}; RC only the countersink Ø", () => {
+  const em = pick("UNC-1/4-20", "EM");
+  assert.deepStrictEqual(em.fill, { threadIn: "HC", tapZIn: "HC", holeIn: "HC", drillZIn: "HC", code: "HC", belowTopIn: "HC", belowTop: "HC", sink: "HC" });
+  for (const k of Object.keys(em.fill)) assert(k in em || k in em.lengths[0], "fill key is a real field: " + k);
+  em.lengths.forEach((l) => assert.deepStrictEqual(l.fill, { threadIn: "HC", tapZIn: "HC", holeIn: "HC", drillZIn: "HC" }));
+  // HC: fill is {}. Heli-Coil prints no STI major Ø, so % thread uses Recoil's: check.majorSrc + borrowed[], not fill.
+  const hc = pick("UNC-1/4-20", "HC");
+  assert.deepStrictEqual(hc.fill, {}); hc.lengths.forEach((l) => assert.deepStrictEqual(l.fill, {}));
+  assert.strictEqual(hc.check.majorSrc, "RC"); assert(hc.borrowed.some((b) => /% thread uses Recoil's STI major/.test(b)));
+  assert.deepStrictEqual(pick("UNC-#1-64", "HC").fill, {}); // HC-only size: everything is Heli-Coil's
+  assert.deepStrictEqual(pick("UNC-1/4-20", "RC").fill, { sink: "HC" });
+  const ty = pick("UNC-1-1/2-6", "RC", 1.5); // 1×D Recoil T is a typo: only that row borrows
+  assert.deepStrictEqual(ty.fill, { sink: "HC" }); assert.strictEqual(ty.lengths[0].fill.holeIn, "HC"); assert.deepStrictEqual(ty.lengths[1].fill, {});
+});
 console.log("\n" + n + " tests passed");
