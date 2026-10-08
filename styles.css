@@ -155,8 +155,13 @@ header h1 span{color:var(--cu2)}
 
 #tp:focus{outline:none}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--teal);text-decoration:underline;cursor:pointer}
-.codewrap{position:relative}
-.codewrap .code{padding-right:74px}
-.copybtn{position:absolute;top:7px;right:7px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--teal);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.35);border-radius:7px;padding:5px 9px;cursor:pointer}
+.codewrap{margin-top:8px}
+.codebar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0a1a1a;border:1px solid #16413c;border-bottom:0;border-radius:10px 10px 0 0;padding:6px 8px 6px 12px}
+.codebar .lbl{font-size:9.5px;color:#5fbfb2}
+.codewrap .code{margin-top:0;border-radius:0 0 10px 10px}
+.copybtn{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--teal);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.35);border-radius:7px;padding:5px 10px;cursor:pointer;flex:none}
 .copybtn:active{transform:scale(.97)}
 .copybtn.ok{color:var(--cu2);border-color:rgba(232,155,107,.5);background:rgba(232,155,107,.08)}
+/* keep each G-code block on one line; scroll sideways instead of wrapping */
+.codewrap .code{white-space:pre;overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:400px){.codewrap .code{font-size:12px;padding:10px}}

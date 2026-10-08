@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=dc1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=dc1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=dc1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=dc1" />
-  <link rel="stylesheet" href="styles.css?v=dc1" />
+  <link rel="manifest" href="manifest.webmanifest?v=cb1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=cb1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=cb1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=cb1" />
+  <link rel="stylesheet" href="styles.css?v=cb1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -109,7 +109,7 @@
         <div class="ro"><div class="lbl">Spindle</div><div class="v" id="t-rpm">—</div><div class="s" id="t-rpm-s"></div></div>
         <div class="ro t"><div class="lbl">Feed = RPM × pitch</div><div class="v" id="t-feed">—</div><div class="s" id="t-feed-s"></div></div>
       </div>
-      <div class="codewrap"><button type="button" class="copybtn" data-copy="t-code" aria-label="Copy tap code">Copy</button><div class="code" id="t-code">—</div></div>
+      <div class="codewrap"><div class="codebar"><span class="lbl">Fanuc · tap cycle</span><button type="button" class="copybtn" data-copy="t-code" aria-label="Copy tap code">Copy</button></div><div class="code" id="t-code">—</div></div>
       <div id="t-info"></div>
     </section>
 
@@ -130,7 +130,7 @@
         <div class="ro t"><div class="lbl" id="d-ipm-lbl">Feed / min</div><div class="v" id="d-ipm">—</div><div class="s" id="d-ipm-s"></div></div>
       </div>
       <div class="chip" id="d-chip"><i></i><span>—</span></div>
-      <div class="codewrap"><button type="button" class="copybtn" data-copy="d-code" aria-label="Copy drill code">Copy</button><div class="code" id="d-code">—</div></div>
+      <div class="codewrap"><div class="codebar"><span class="lbl">Fanuc · drill cycle</span><button type="button" class="copybtn" data-copy="d-code" aria-label="Copy drill code">Copy</button></div><div class="code" id="d-code">—</div></div>
       <div id="d-info"></div>
     </section>
 
@@ -218,8 +218,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=dc1"></script>
-<script src="calc.js?v=dc1"></script>
-<script src="app.js?v=dc1"></script>
+<script src="data.js?v=cb1"></script>
+<script src="calc.js?v=cb1"></script>
+<script src="app.js?v=cb1"></script>
 </body>
 </html>

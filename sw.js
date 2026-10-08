@@ -1,7 +1,7 @@
 // Drill & Tap offline cache. Bump VERSION on every release.
-const VERSION = "dt-dc1";
-const FILES = ["./", "index.html", "styles.css?v=dc1", "data.js?v=dc1", "calc.js?v=dc1", "app.js?v=dc1",
-  "manifest.webmanifest?v=dc1", "icon.svg?v=dc1", "icon-192.png?v=dc1", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png?v=dc1"];
+const VERSION = "dt-cb1";
+const FILES = ["./", "index.html", "styles.css?v=cb1", "data.js?v=cb1", "calc.js?v=cb1", "app.js?v=cb1",
+  "manifest.webmanifest?v=cb1", "icon.svg?v=cb1", "icon-192.png?v=cb1", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png?v=cb1"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
