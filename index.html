@@ -66,7 +66,7 @@
       <div class="row">
         <div class="field tp-field" style="flex:2">
           <div class="lbl" id="thread-size-lbl">Size · tap to search</div>
-          <button type="button" id="thread-btn" class="tp-btn" aria-haspopup="dialog" aria-controls="tp" aria-labelledby="thread-size-lbl thread-btn-txt"><span id="thread-btn-txt">—</span><span class="tp-meta" id="thread-btn-meta"></span></button>
+          <button type="button" id="thread-btn" class="tp-btn" aria-haspopup="dialog" aria-controls="tp" aria-labelledby="thread-size-lbl thread-btn-txt"><span id="thread-btn-txt">—</span><span class="tp-meta" id="thread-btn-meta"></span><span class="ins-chip" id="ins-chip" hidden>INSERT · STI</span></button>
           <select id="thread" hidden tabindex="-1" aria-hidden="true"></select>
         </div>
         <label class="field" id="pct-field"><div class="lbl">% Thread</div><input id="pct" type="number" inputmode="decimal" min="50" max="100" step="1" value="75" /></label>
@@ -75,6 +75,8 @@
         <button type="button" id="tt-cut" class="on cu" aria-pressed="true">Cut tap</button>
         <button type="button" id="tt-form" aria-pressed="false">Form tap</button>
       </div>
+      <!-- INSERT / STI (Maria UI; sizes + checks: Jenny) -->
+      <label class="ins-sw" id="ins-sw"><input type="checkbox" id="ins-on" role="switch" /><span class="trk" aria-hidden="true"><i></i></span><span class="ins-t"><b>Insert (STI)</b><small id="ins-note">Repair a stripped thread, or put a stronger thread in soft metal</small></span></label>
     </section>
 
     <!-- HOLE / TAP DRILL -->
@@ -276,6 +278,20 @@
           <div class="ro" id="c-form-out"><div class="lbl">Form · total</div><div class="v" id="c-form-tot">—</div><div class="line"><span>wear</span><span id="c-form-wear">—</span></div><div class="line mut"><span>incl. tap changes</span><span id="c-form-chg">—</span></div><div class="line"><span>breaks</span><span id="c-form-breaks">—</span></div></div>
         </div>
         <div class="info" id="c-verdict"></div>
+        <!-- Repair or scrap? (Stacey method, Maria UI) -->
+        <div class="rep" id="rep">
+          <div class="sub">Repair or scrap? · insert vs new part</div>
+          <div class="row">
+            <label class="field rep-min"><div class="lbl">Repair min</div><input id="r-min" type="number" inputmode="decimal" min="0" step="any" value="10" /></label>
+            <label class="field"><div class="lbl">Insert $</div><input id="r-ins" type="number" inputmode="decimal" min="0" step="any" value="1.50" /></label>
+          </div>
+          <div class="row">
+            <label class="field"><div class="lbl">STI tap $</div><input id="r-tap" type="number" inputmode="decimal" min="0" step="any" value="30" /></label>
+            <label class="field"><div class="lbl">Holes / STI tap</div><input id="r-life" type="number" inputmode="numeric" min="1" step="1" value="500" /></label>
+          </div>
+          <div class="rep-out" id="rep-out" aria-live="polite"></div>
+          <div class="info">Uses Part value and Shop rate from above. <b>Sources:</b> simple arithmetic, repair = insert + STI tap ÷ holes per tap + repair minutes × shop rate, compared with the part value. Dollar defaults are samples, not published prices.</div>
+        </div>
         <div class="info"><b>Sources:</b> cost per hole = (tap price + setup + replacement time) ÷ holes: Sky Rye Design, “How to Calculate Cost Savings When Switching from Cut Taps to Form Taps” · West Ohio Tool cost-per-hole calculator. Dollar defaults are samples, not published data.</div>
       </div>
     </section>
@@ -307,5 +323,6 @@
 <script src="app.js?v=tc1"></script>
 <script src="troubledata.js?v=tc1"></script>
 <script src="troubleshoot.js?v=tc1"></script>
+<script src="insert.js?v=tc1"></script>
 </body>
 </html>

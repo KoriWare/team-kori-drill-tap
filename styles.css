@@ -258,3 +258,34 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 .ts-cost{margin-top:10px;padding:10px 12px;border:1px dashed rgba(232,197,71,.55);border-radius:12px;background:rgba(232,197,71,.05);font-size:12px;color:#e9dca0;line-height:1.45}
 .ts-cost .lbl{color:var(--gold);margin-bottom:3px}
 .ts-cost b{color:var(--gold);font:700 14px var(--mono)}
+
+/* --- Insert (STI) switch + Repair or scrap? (Maria, ins1) --- */
+.ins-sw{display:flex;align-items:center;gap:11px;margin-top:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#0b1115;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ins-sw input{position:absolute;opacity:0;width:1px;height:1px}
+.ins-sw .trk{flex:none;width:38px;height:22px;border-radius:999px;background:#1c262d;border:1px solid var(--line);position:relative;transition:background .15s}
+.ins-sw .trk i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dim);transition:transform .15s,background .15s}
+.ins-sw input:checked + .trk{background:rgba(232,137,74,.25);border-color:rgba(232,137,74,.6)}
+.ins-sw input:checked + .trk i{transform:translateX(16px);background:var(--cu2);box-shadow:0 0 8px rgba(232,137,74,.6)}
+.ins-sw input:focus-visible + .trk{outline:2px solid var(--teal);outline-offset:2px}
+.ins-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ins-t b{font:600 13.5px var(--sans);color:var(--text)}
+.ins-t small{font-size:11.5px;color:var(--dim);line-height:1.35}
+.ins-t small.wait{color:var(--amber)}
+body.is-ins .ins-sw{border-color:rgba(232,137,74,.55);background:linear-gradient(180deg,rgba(232,137,74,.08),#0b1115)}
+body.is-ins .ins-t b{color:var(--cu2)}
+.ins-chip{display:inline-block;margin-left:8px;vertical-align:middle;font:700 9.5px var(--mono);letter-spacing:.1em;color:var(--cu2);border:1px solid rgba(232,137,74,.6);background:rgba(232,137,74,.12);border-radius:999px;padding:2px 7px}
+.rep{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(232,197,71,.35)}
+.rep .rep-min input{border-color:rgba(232,197,71,.6);box-shadow:0 0 0 1px rgba(232,197,71,.25)}
+.rep .rep-min .lbl{color:var(--gold)}
+.rep-out{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(232,197,71,.45);background:rgba(232,197,71,.06)}
+.rep-v{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rep-v b{font:700 18px var(--mono);color:var(--gold)}
+.rep-verdict{margin-top:4px;font:700 13px var(--sans)}
+.rep-out.win .rep-verdict{color:var(--green)}
+.rep-out.lose .rep-verdict{color:var(--red)}
+.rep-line{margin-top:3px;font-size:11.5px;color:#cbbf86}
+.ts-rep{margin-top:10px;padding:10px 12px;border:1px solid rgba(232,137,74,.45);border-radius:12px;background:rgba(232,137,74,.05)}
+.ts-rep-hd .lbl{color:var(--cu2)}
+.ts-rep-btn{display:block;width:100%;margin-top:8px;padding:9px 0;border-radius:10px;font:700 13px var(--sans);color:var(--cu2);background:rgba(232,137,74,.14);border:1px solid rgba(232,137,74,.6);cursor:pointer}
+.ts-rep-btn.on{color:var(--green);background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.5)}
+.ts-rep .ts-cost{margin-top:9px}

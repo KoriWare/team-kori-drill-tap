@@ -76,6 +76,17 @@
     return '<div class="s">Source: ' + (ok ? '<a href="' + esc(src.url) + '" target="_blank" rel="noopener">' + esc(src.name) + "</a>" : esc(src.name)) + "</div>";
   }
 
+  // Thread oversize: offer the insert repair + Stacey's Repair or scrap? sample line.
+  function repairLine() {
+    const r = typeof window.DT_REPAIR === "function" ? window.DT_REPAIR() : null, on = !!window.DT_INSERT;
+    const usd = (v) => "$" + v.toFixed(2);
+    let t = '<div class="ts-rep"><div class="ts-rep-hd"><span class="lbl">Save the part with an insert</span></div>' +
+      '<button type="button" class="ts-rep-btn' + (on ? " on" : "") + '" data-ins>' + (on ? "✓ Insert (STI) is on · see Thread" : "Repair with an insert (STI)") + "</button>";
+    if (r) t += '<div class="ts-cost"><span class="lbl">DEMO $ · repair or scrap?</span>Sample repair is <b>' + usd(r.repair) + "</b> vs a <b>" + usd(r.part) + "</b> part, so " +
+      (r.save >= 0 ? "repair wins by <b>" + usd(r.save) + "</b>." : "scrap wins by <b>" + usd(-r.save) + "</b>.") + " Type your own numbers in DEMO $ below.</div>";
+    return t + "</div>";
+  }
+
   function render() {
     const st = window.DT_STATE; if (!st || !$("ts-sym")) return;
     const D = window.DT_DATA || {}, C = window.DT_CALC || {};
@@ -109,6 +120,7 @@
         (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
     });
     if (sel === "broke") h += demoLine();
+    if (sel === "oversize") h += repairLine();
     if (!real) h += '<div class="info src"><b>Sources:</b> coming from Jenny\'s research, one per fix.</div>';
     $("ts-body").innerHTML = h;
   }
@@ -123,7 +135,13 @@
       try { sel ? localStorage.setItem("dt-ts-sym", sel) : localStorage.removeItem("dt-ts-sym"); } catch (er) {}
       render();
     });
+    $("ts-body").addEventListener("click", (e) => {
+      if (!e.target.closest("[data-ins]")) return;
+      if (typeof window.DT_SET_INSERT === "function") window.DT_SET_INSERT(true);
+      render();
+    });
     document.addEventListener("dt:change", render);
+    document.addEventListener("dt:insert", render);
     document.addEventListener("input", (e) => { if (e.target.closest && e.target.closest(".demo")) render(); });
     render();
   }
