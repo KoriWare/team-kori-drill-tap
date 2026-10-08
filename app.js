@@ -348,7 +348,7 @@
       $("r-pct").innerHTML = r.taper ? "1:16<small> taper</small>" : "parallel";
       const nps = t.id.indexOf("NPS-") === 0;
       $("r-pct-s").textContent = r.taper ? "1°47′ per side" : nps ? "NPS · ASME B1.20.1" : "G · ISO 228";
-      $("cls-row").hidden = true; $("cls-info").hidden = true; $("clr-row").hidden = true; $("cls-src").hidden = true; $("clr-src").hidden = true;
+      $("cls-row").hidden = true; $("cls-info").hidden = true; $("clr-row").hidden = true; $("cls-src").hidden = true; $("clr-src").hidden = true; $("clr-panel").hidden = true;
       setChip($("r-chip"), r.status.level, r.status.text);
       const lines = r.info.map((x) => ({ t: x }));
       if (r.taper) {
@@ -437,7 +437,7 @@
   }
   function renderClear(t) {
     const c = C.clearance(t);
-    $("clr-row").hidden = !c; $("clr-src").hidden = !c;
+    $("clr-row").hidden = !c; $("clr-src").hidden = !c; $("clr-panel").hidden = !c;
     if (!c) return;
     infoLines($("clr-src"), [{ html: "<b>Sources:</b> " + esc(t.system === "metric"
       ? "ISO 273:1979 clearance holes (fine series = close fit, medium = free fit)"

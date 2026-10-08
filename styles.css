@@ -197,6 +197,8 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 /* clearance drill: two cards, label / big size / decimal */
 .clrrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .clrrow>.lbl{grid-column:1/-1;margin:0}
+.panel.clr .clrrow{margin-top:0}
+.panel.clr .clrrow>.lbl{margin-bottom:2px}
 .pill{display:flex;flex-direction:column;gap:3px;padding:9px 12px 10px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#0e151a,#0b1115);position:relative;overflow:hidden}
 .pill::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--cu)}
 #clr-free::before{background:var(--teal)}

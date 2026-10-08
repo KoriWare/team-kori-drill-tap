@@ -22,11 +22,11 @@
   <meta name="twitter:title" content="Drill &amp; Tap Calculator" />
   <meta name="twitter:description" content="Free tap drill + % thread for 195 sizes, speeds &amp; feeds, Fanuc rigid tap + drill code, Troubleshoot and STI inserts. Every number sourced. Works offline." />
   <meta name="twitter:image" content="https://koriware.github.io/team-kori-drill-tap/og-image.png" />
-  <link rel="manifest" href="manifest.webmanifest?v=tc6" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=tc6" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=tc6" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=tc6" />
-  <link rel="stylesheet" href="styles.css?v=tc6" />
+  <link rel="manifest" href="manifest.webmanifest?v=tc7" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=tc7" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=tc7" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=tc7" />
+  <link rel="stylesheet" href="styles.css?v=tc7" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -56,7 +56,7 @@
           <li><b>Green</b> = good. <b>Amber</b> = check it (shallow thread, or a pipe thread that uses a table drill). <b>Red</b> = high torque, the tap may snap.</li>
           <li>More than ~75% thread barely adds strength but adds a lot of tap torque.</li>
           <li><b>Thread class.</b> Pick 2B or 3B (inch) — metric is 6H. The green band in the drawing is the allowed minor Ø; the chip says if your drill lands in it, under it (tight) or over it. Form taps don't cut the minor, so check those with a gauge.</li>
-          <li><b>Clearance drill</b> for the bolt in the mating part: close fit and free fit (inch chart, ISO 273 metric).</li>
+          <li><b>Clearance drill</b> for the bolt in the mating part has its own card below the Drill panel, just above Convert: close fit and free fit (inch chart, ISO 273 metric). Pipe threads don't show it.</li>
           <li><b>Pipe threads</b> (NPT, NPS, BSPT, BSPP) don't use the % formula. The app shows the published table drill. Tapered threads: check depth with an L1 plug gauge. NPS lists the NPSM drill first and the NPSC (coupling) drill under it.</li>
         </ul>
         <p><b>4. Speeds &amp; feeds.</b> Set the work material and its hardness once (HB or HRC). Leave hardness blank and the app uses a typical value for that material. If the material is too soft for the HRC scale, switch to HB.</p>
@@ -110,11 +110,6 @@
       </div>
       <div class="info" id="cls-info"></div>
       <div id="cls-src"></div>
-      <div class="clrrow" id="clr-row">
-        <div class="lbl">Clearance drill</div>
-        <span class="pill" id="clr-close">—</span><span class="pill" id="clr-free">—</span>
-      </div>
-      <div id="clr-src"></div>
       <div id="r-info"></div>
       <table class="opts" id="r-opts" aria-label="Nearest standard drills"></table>
     </section>
@@ -220,6 +215,15 @@
     </section>
 
     </div>
+
+    <!-- CLEARANCE DRILL (mating part; Maria pill cards) -->
+    <section class="panel clr" id="clr-panel" aria-labelledby="clr-lbl">
+      <div class="clrrow" id="clr-row">
+        <div class="lbl" id="clr-lbl">Clearance drill · mating part</div>
+        <span class="pill" id="clr-close">—</span><span class="pill" id="clr-free">—</span>
+      </div>
+      <div id="clr-src"></div>
+    </section>
 
     <!-- CONVERT -->
     <section class="panel conv">
@@ -343,7 +347,7 @@
     <p>Team Kori · Jenny (calc) · Maria (UI) · Stacey (demo $) · Casey (ops later)</p>
     <p class="fine">Static page · free GitHub Pages friendly · no accounts, no private data</p>
     <p class="fine">Starting points only — always check your tool maker's chart.</p>
-    <p class="fine"><img src="cat-mark.svg?v=tc6" alt="" class="cat-mark" width="18" height="16">© 2026 KoriWare · All rights reserved</p>
+    <p class="fine"><img src="cat-mark.svg?v=tc7" alt="" class="cat-mark" width="18" height="16">© 2026 KoriWare · All rights reserved</p>
   </footer>
 </div>
 <!-- THREAD PICKER (type-to-search) -->
@@ -360,11 +364,11 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=tc6"></script>
-<script src="calc.js?v=tc6"></script>
-<script src="app.js?v=tc6"></script>
-<script src="troubledata.js?v=tc6"></script>
-<script src="troubleshoot.js?v=tc6"></script>
-<script src="insert.js?v=tc6"></script>
+<script src="data.js?v=tc7"></script>
+<script src="calc.js?v=tc7"></script>
+<script src="app.js?v=tc7"></script>
+<script src="troubledata.js?v=tc7"></script>
+<script src="troubleshoot.js?v=tc7"></script>
+<script src="insert.js?v=tc7"></script>
 </body>
 </html>
