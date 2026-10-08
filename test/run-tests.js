@@ -318,6 +318,19 @@ t("DT_CALC.sti shape for every STI row (Maria's frame) and null where nothing is
   for (const id of ["UNEF-1/4-32", "NPT-1/4", "M1x0.25", "UNC-2-4.5", "M6x0.75"]) assert.strictEqual(C.sti(th(id), stiS), null, id);
   const rpm = C.sti(th("UNC-1/4-20"), stiS, { rpm: 600 }); assert(rpm.code.includes("M29 S600") && rpm.code.some((l) => / F30\.?$/.test(l)), rpm.code.join("|"));
 });
+t("STI primary drill = Heli-Coil chart drill (Kori's inch shop): 1/4-20 H, 1/2-13 33/64 amber with note, steel column on request, Recoil only without HC", () => {
+  const q = C.sti(th("UNC-1/4-20"), stiS);
+  assert.equal(q.drill.label, "H"); near(q.drill.dIn, 0.266, 1e-9, "H"); assert.equal(q.drill.src, "HC"); assert.equal(q.check.level, "green");
+  assert(/Table V, p\.18/.test(q.drill.note), q.drill.note);
+  const h = C.sti(th("UNC-1/2-13"), stiS);
+  assert.equal(h.drill.label, "33/64"); near(h.drill.dIn, 33 / 64, 1e-9, "33/64"); assert.equal(h.drill.src, "HC"); assert.strictEqual(h.drill.inBand, false);
+  assert.equal(h.check.level, "amber"); assert(/Under min/.test(h.check.text), h.check.text);
+  assert(/on purpose/.test(h.drill.note) && /footnote to Table V, p\.18/.test(h.drill.note) && /In-band alternates: Emuge 13\.3 mm/.test(h.drill.note), h.drill.note);
+  const st = C.sti(th("UNC-1/2-13"), Object.assign({}, stiS, { stiSteel: true }));
+  assert.equal(st.drill.label, "17/32"); assert.equal(st.check.level, "red"); assert(/p\.17/.test(st.drill.note), st.drill.note);
+  assert.equal(C.sti(th("UNF-#5-44"), stiS).drill.src, "RC");
+  for (const id of Object.keys(D.STI)) { const r = C.sti(th(id), stiS), f = C.stiFor(th(id)); if (D.STI[id].hc) assert.equal(r.drill.label, D.STI[id].hc.d[0], id); else assert.equal(r.drill.src, "RC", id); assert(!/ mm$/.test(r.drill.label) || !f.inch || !D.STI[id].hc || / mm$/.test(D.STI[id].hc.d[0]), id); }
+});
 t("FEATURES.inserts=false → DT_CALC.sti returns null (launch without Inserts)", () => {
   assert.strictEqual(D.FEATURES.inserts, true);
   D.FEATURES.inserts = false;

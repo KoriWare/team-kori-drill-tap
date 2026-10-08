@@ -732,16 +732,28 @@
     const units = S.units === "mm" ? "mm" : "in", R = DATA.STI_RULES, P = f.pitchIn;
     const lock = !!S.stiLock, cls = f.inch ? (lock ? "3B" : (S.cls === "3B" ? "3B" : "2B")) : (lock ? "4H5H" : "5H");
     const lockCls = cls === "3B" || cls === "4H5H";
-    // Drill: first charted drill that lands inside the STI minor band, in this order: Heli-Coil aluminum column (HC says
-    // it is inside the NASM33537 / MA1567 minor limits), Heli-Coil steel/Mg/plastic column, Recoil, Emuge. If none
-    // lands inside, the Heli-Coil drill stays (its footnote: standard drills vary slightly from the limits).
-    // S.stiSteel puts Heli-Coil's steel column first and keeps it even outside the band (HC sizes it larger on purpose).
+    // Drill: Heli-Coil's chart drill, as printed (Kori: the floor checks against the shop's Heli-Coil chart).
+    // General/aluminum column by default; S.stiSteel = the "Steel, Magnesium, Plastic" column. Kept even when it sits
+    // slightly outside the computed STI minor band; check.level shows where it lands and drill.note says why and lists
+    // in-band alternates. Recoil is used only for sizes Heli-Coil doesn't chart (e.g. #5-44 UNF), then Emuge.
     const lim = stiLimits(t, cls), inBand = (x) => classCheck(lim, x.dIn, "cut").level === "green";
-    const hc = f.drills.filter((x) => x.src === "HC"), steel = S.stiSteel && hc[1] ? hc[1] : null;
-    const dr = steel || f.drills.find(inBand) || f.drill;
-    const others = f.drills.filter((x) => x !== dr && x.label !== dr.label).map((x) => ({ HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" }[x.src] + " " + x.label));
-    const srcName = { HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" }[dr.src];
-    const drill = { label: dr.label, dIn: dr.dIn, note: stiFmt(dr.dIn, units) + " · " + srcName + (dr.src === "HC" ? " (" + dr.use + ")" : "") + (others.length ? " · also " + others.join(", ") : ""), alts: f.drills };
+    const NM = { HC: "Heli-Coil", RC: "Recoil", EM: "Emuge" };
+    const hc = f.drills.filter((x) => x.src === "HC"), steel = !!(S.stiSteel && hc[1]);
+    const dr = steel ? hc[1] : hc[0] || f.drills.find((x) => x.src === "RC") || f.drill;
+    const tbl = f.inch ? "Table V, p.18" : "Table VI, p.19";
+    const others = f.drills.filter((x) => x.label !== dr.label);
+    let note = stiFmt(dr.dIn, units) + " · " + NM[dr.src] + (dr.src === "HC" ? " " + tbl + ", " + (steel ? "steel / magnesium / plastic" : "general (aluminum)") + " column" : dr.src === "RC" ? " p." + (f.inch ? (/^UNF/.test(t.id) ? 24 : 23) : 22) + " (no Heli-Coil chart for this size)" : "");
+    const dIn = inBand(dr);
+    if (!dIn && dr.src === "HC") {
+      const alt = others.filter(inBand).map((x) => NM[x.src] + " " + x.label);
+      note += " · " + (steel
+        ? "Outside the STI minor band on purpose: Heli-Coil makes its steel / magnesium / plastic drills larger to allow for material close-in and tap life (HC2000 p.17)."
+        : f.footnote
+          ? "Outside the STI minor band on purpose: Heli-Coil's footnote to " + tbl + " says standard drills are suggested even though they vary slightly from the minor limits."
+          : "Outside the STI minor band: this is Heli-Coil's printed drill (" + tbl + "), but the chart has no footnote for this size, so gauge the tapped hole.") +
+        (alt.length ? " In-band alternates: " + alt.join(", ") + "." : " No charted alternate lands in band.");
+    } else if (others.length) note += " · also " + others.map((x) => NM[x.src] + " " + x.label).join(", ");
+    const drill = { label: dr.label, dIn: dr.dIn, src: dr.src, inBand: dIn, note, alts: f.drills };
     // Tap
     const base = f.inch ? t.label + "-" + cls : t.label + " " + cls;
     const bot = S.chamf === "bottoming", pn = f.taps ? (bot ? (lockCls ? f.taps.botLock : f.taps.botFree) : (lockCls ? f.taps.plugLock : f.taps.plugFree)) : null;
@@ -752,8 +764,7 @@
     const pct = st ? pctFromDrill(st, "cut", inToNative(t, dr.dIn)) : NaN;
     const band = units === "mm" ? (lim.minIn * IN_MM).toFixed(3) + "–" + (lim.maxIn * IN_MM).toFixed(3) + " mm" : lim.minIn.toFixed(4).replace(/^0/, "") + "–" + lim.maxIn.toFixed(4).replace(/^0/, "") + '"';
     let check = { level: cc.level, text: cc.text + " (minor " + band + ")" + (Number.isFinite(pct) ? " · " + Math.round(pct) + "% thread" : ""), pct: Number.isFinite(pct) ? pct : null };
-    if (cc.level !== "green" && steel) check = { level: "amber", text: check.text + ". Heli-Coil sizes the steel/magnesium/plastic drill larger on purpose (material close-in, tap life): gauge the tapped hole.", pct: check.pct };
-    else if (cc.level !== "green" && f.footnote && dr.src === "HC") check.text += ". Heli-Coil footnote: a standard drill is suggested though it varies slightly from the minor limits; gauge the tapped hole.";
+    if (cc.level !== "green" && dr.src === "HC") check.text += " · Heli-Coil chart drill (see drill note); gauge the tapped hole";
     if (S.tapType === "form") check = { level: "amber", text: "These STI drills are for cut STI taps. A form STI tap needs a bigger drill: use the tap maker's chart.", pct: null };
     // Lengths
     const mode = S.hole === "through" ? "through" : "blind", ch = CHAMFER[S.chamf] ? S.chamf : "plug";
