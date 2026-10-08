@@ -5,6 +5,7 @@
 (function () {
   "use strict";
   const D = window.DT_DATA, C = window.DT_CALC, IN_MM = C.IN_MM;
+  const TOUCH = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
   const $ = (id) => document.getElementById(id);
   const LS = { units: "dt-units", demo: "dt-demo", scale: "dt-hscale" };
   const store = { get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
@@ -147,7 +148,12 @@
       lastFocus = document.activeElement;
       $("tp").hidden = false; document.documentElement.classList.add("tp-open");
       $("tp-q").value = ""; render();
-      requestAnimationFrame(() => { $("tp").classList.add("in"); $("tp-q").focus({ preventScroll: true }); });
+      requestAnimationFrame(() => {
+        $("tp").classList.add("in");
+        // Phones: don't pop the keyboard until the search box itself is tapped.
+        if (TOUCH) { const sh = $("tp"); if (!sh.hasAttribute("tabindex")) sh.setAttribute("tabindex", "-1"); sh.focus({ preventScroll: true }); }
+        else $("tp-q").focus({ preventScroll: true });
+      });
     }
     function close() {
       $("tp").classList.remove("in"); document.documentElement.classList.remove("tp-open");
@@ -160,7 +166,9 @@
         const b = e.target.closest("button"); if (!b) return;
         fam = b.dataset.f;
         $("tp-filt").querySelectorAll("button").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); });
-        render(); $("tp-q").focus({ preventScroll: true });
+        render();
+        if (TOUCH) { if (document.activeElement === $("tp-q")) $("tp-q").blur(); } // filters never open the keyboard
+        else $("tp-q").focus({ preventScroll: true });
       };
       $("thread-btn").closest(".field").onclick = open; // whole Size box is the tap target
       $("tp").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) close(); });

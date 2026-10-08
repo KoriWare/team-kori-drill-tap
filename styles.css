@@ -152,3 +152,5 @@ header h1 span{color:var(--cu2)}
 /* Example tag on first load */
 .example-tag{margin:2px 0 10px}
 .example-tag[hidden]{display:none}
+
+#tp:focus{outline:none}
