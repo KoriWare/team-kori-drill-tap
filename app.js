@@ -339,12 +339,13 @@
       $("r-pct").innerHTML = r.taper ? "1:16<small> taper</small>" : "parallel";
       const nps = t.id.indexOf("NPS-") === 0;
       $("r-pct-s").textContent = r.taper ? "1°47′ per side" : nps ? "NPS · ASME B1.20.1" : "G · ISO 228";
-      $("cls-row").hidden = true; $("cls-info").hidden = true; $("clr-row").hidden = true;
+      $("cls-row").hidden = true; $("cls-info").hidden = true; $("clr-row").hidden = true; $("cls-src").hidden = true; $("clr-src").hidden = true;
       setChip($("r-chip"), r.status.level, r.status.text);
       const lines = r.info.map((x) => ({ t: x }));
       if (r.taper) {
         lines.push({ html: "<b>" + esc(r.L1Name) + "</b> " + esc(len(r.L1In)) + " · <b>" + esc(r.L2Name) + "</b> " + esc(len(r.L2In)) });
       }
+      if (nps) lines.push({ html: "<b>Sources:</b> " + esc("Allied Machine tap drill chart (NPS column) · Tameson pipe thread drilled-hole chart (NPSC) · ASME B1.20.1") });
       if (S.tapType === "form") lines.push({ c: "warn", t: "Table drills are for cut pipe taps. Form pipe taps need a bigger drill — use the tap maker's chart." });
       infoLines($("r-info"), lines);
       $("r-opts").innerHTML = "<tr><th>Table drill</th><th>" + (S.units === "mm" ? "mm" : "in") + "</th><th>Note</th></tr>" +
@@ -409,23 +410,28 @@
       seg.innerHTML = opts.map((o) => '<button type="button" data-cls="' + o + '" aria-pressed="' + (o === cls) + '"' + (o === cls ? ' class="on"' : "") + ">" + o + "</button>").join("");
     }
     const lim = C.minorLimits(t, cls);
-    $("cls-row").hidden = !lim; $("cls-info").hidden = !lim;
+    $("cls-row").hidden = !lim; $("cls-info").hidden = !lim; $("cls-src").hidden = !lim;
     if (!lim) return null;
+    infoLines($("cls-src"), [{ html: "<b>Sources:</b> " + esc(inch
+      ? "ASME B1.1-2019 Unified Inch Screw Threads, internal minor Ø limit formulas (checked against published 2B / 3B tables)"
+      : "ISO 965-1:2013 metric thread tolerances, TD1 minor Ø tolerance table") }]);
     const chk = C.classCheck(lim, drillIn, S.tapType);
     setChip($("cls-chip"), chk.level, chk.text);
     const rng = S.units === "mm" || !inch ? (lim.minIn * IN_MM).toFixed(3) + "–" + (lim.maxIn * IN_MM).toFixed(3) + " mm" : dec(lim.minIn, 4) + "–" + dec(lim.maxIn, 4) + '"';
-    let txt = "Minor Ø " + lim.cls + " " + rng + " (" + lim.std + ")." + (S.tapType === "cut" ? " Green band in the drawing." : "");
+    let txt = "Minor Ø " + lim.cls + " " + rng + "." + (S.tapType === "cut" ? " Green band in the drawing." : "");
     if (!inch && lim.cls !== "6H") txt += " ISO lists no 6H for this pitch, so " + lim.cls + " is shown.";
     $("cls-info").textContent = txt;
     return lim;
   }
   function renderClear(t) {
     const c = C.clearance(t);
-    $("clr-row").hidden = !c;
+    $("clr-row").hidden = !c; $("clr-src").hidden = !c;
     if (!c) return;
+    infoLines($("clr-src"), [{ html: "<b>Sources:</b> " + esc(t.system === "metric"
+      ? "ISO 273:1979 clearance holes (fine series = close fit, medium = free fit)"
+      : "UVA Physics machine shop clearance hole drill chart (same as NORAMARK and TR Fastenings charts)") }]);
     const pill = (nm, o) => '<span class="pk">' + nm + "</span><b>" + esc(o.label) + "</b>" + '<span class="ps">' + (/mm$/.test(o.label) && S.units === "mm" ? "ISO 273" : esc(len(o.dIn))) + "</span>";
     $("clr-close").innerHTML = pill("Close fit", c.close); $("clr-free").innerHTML = pill("Free fit", c.free);
-    $("clr-row").title = c.std;
   }
 
   // Hole depth chain → Z words for both code boxes (Z0 = top of part).
@@ -453,6 +459,7 @@
       ? "Blind: tap Z = thread depth + chamfer (" + D_CH[S.chamf] + " threads). Drill full Ø one pitch deeper, plus the " + S.pt + "° point."
       : "Through: tap past the bottom by the chamfer plus one pitch. Drill breaks out " + b(h.breakIn) + " plus the point."];
     if (S.depthIn <= 0) lines.push({ c: "warn", t: "Enter a depth above 0 to fill Z." });
+    lines.push({ html: "<b>Sources:</b> " + esc("Tap chamfer lengths: Kennametal tap technical data and MSC High Performance Taps guide (taper 7–10, plug 3–5, bottoming 1–2 threads; the app uses 8 / 4 / 2) · drill point length = Ø ÷ (2 × tan(point angle ÷ 2)), cone geometry. The one-pitch clearance and 0.020\" breakout are rules of thumb, not a standard.") });
     infoLines($("z-info"), lines);
   }
   const D_CH = { bottoming: "~2", plug: "~4", taper: "~8" };

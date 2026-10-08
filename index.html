@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=r1v" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=r1v" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=r1v" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=r1v" />
-  <link rel="stylesheet" href="styles.css?v=r1v" />
+  <link rel="manifest" href="manifest.webmanifest?v=r1s" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=r1s" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=r1s" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=r1s" />
+  <link rel="stylesheet" href="styles.css?v=r1s" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -52,7 +52,7 @@
         <p><b>7. G-code.</b> The tap box gives a Fanuc rigid-tap block (M29 + G84). The drill box picks the cycle from the hole depth: G81 (no peck), G73 (chip-break peck) or G83 (full-retract peck), with the peck depth Q. Z comes from Hole depth (Z0 = top of the part); fill in X Y (hole position) and R (retract plane). <b>Copy</b> above each box copies the whole block.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
-        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Type your own to estimate. They stay on your device and aren't in the share link.</p>
+        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Method: cost per hole = (tap price + change time) ÷ holes per tap, plus breakage. Dollar defaults are samples, not published data. Type your own to estimate. They stay on your device and aren't in the share link.</p>
         <p><b>On a PC</b> the tap and drill panels sit side by side. <b>On a phone</b>, add it to your Home Screen and it works offline after the first visit.</p>
       </details>
     </section>
@@ -90,10 +90,12 @@
         <div class="chip" id="cls-chip"><i></i><span>—</span></div>
       </div>
       <div class="info" id="cls-info"></div>
+      <div id="cls-src"></div>
       <div class="clrrow" id="clr-row">
         <div class="lbl">Clearance drill</div>
         <span class="pill" id="clr-close">—</span><span class="pill" id="clr-free">—</span>
       </div>
+      <div id="clr-src"></div>
       <div id="r-info"></div>
       <table class="opts" id="r-opts" aria-label="Nearest standard drills"></table>
     </section>
@@ -244,6 +246,7 @@
           <div class="ro" id="c-form-out"><div class="lbl">Form · total</div><div class="v" id="c-form-tot">—</div><div class="line"><span>wear</span><span id="c-form-wear">—</span></div><div class="line mut"><span>incl. tap changes</span><span id="c-form-chg">—</span></div><div class="line"><span>breaks</span><span id="c-form-breaks">—</span></div></div>
         </div>
         <div class="info" id="c-verdict"></div>
+        <div class="info"><b>Sources:</b> cost per hole = (tap price + setup + replacement time) ÷ holes: Sky Rye Design, “How to Calculate Cost Savings When Switching from Cut Taps to Form Taps” · West Ohio Tool cost-per-hole calculator. Dollar defaults are samples, not published data.</div>
       </div>
     </section>
   </main>
@@ -268,8 +271,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=r1v"></script>
-<script src="calc.js?v=r1v"></script>
-<script src="app.js?v=r1v"></script>
+<script src="data.js?v=r1s"></script>
+<script src="calc.js?v=r1s"></script>
+<script src="app.js?v=r1s"></script>
 </body>
 </html>
