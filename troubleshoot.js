@@ -69,11 +69,13 @@
   }
 
   // Per-card source: { name, url } (real data) or a plain string.
-  function srcLink(src) {
+  function srcLink(src, also) {
     if (!src) return "";
     if (typeof src === "string") return '<div class="s">Source: ' + esc(src) + "</div>";
-    const ok = /^https:\/\//.test(src.url || "");
-    return '<div class="s">Source: ' + (ok ? '<a href="' + esc(src.url) + '" target="_blank" rel="noopener">' + esc(src.name) + "</a>" : esc(src.name)) + "</div>";
+    const one = (x) => /^https:\/\//.test(x.url || "") ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + "</a>" : esc(x.name);
+    // also: second sources that agree with the fix (Harvey Tool, Kori's pick, Oct 7).
+    const more = (also || []).filter((x) => x && x.name).map(one);
+    return '<div class="s">Source: ' + one(src) + (more.length ? " · also " + more.join(", ") : "") + "</div>";
   }
 
   // Thread oversize: offer the insert repair + Stacey's Repair or scrap? sample line.
@@ -117,7 +119,7 @@
       const k = byId[c.id], cls = k ? (k.level === "live" ? (k.sev === "red" ? " live red" : " live") : " ok") : "";
       h += '<div class="fx' + cls + '"><div class="t">' + esc(c.title) + (k ? '<span class="tag">' + (k.level === "live" ? (k.sev === "red" ? "HIGH RISK" : "YOUR SETTINGS") : "CHECKED") + "</span>" : "") + "</div>" +
         (c.why ? '<div class="why">' + esc(c.why) + "</div>" : "") + (c.fix ? '<div class="do"><b>Fix:</b> ' + esc(c.fix) + "</div>" : "") +
-        (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
+        (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src, c.also) + "</div>";
     });
     if (sel === "broke") h += demoLine();
     if (sel === "oversize" && window.DT_INSERT_AVAIL) h += repairLine();

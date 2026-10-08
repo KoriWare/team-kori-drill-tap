@@ -171,11 +171,17 @@
   {
    "id": "tight-3",
    "title": "Form tap with a pre-drill that's too small",
-   "fix": "Form taps need a bigger drill. Start slightly over the calculated size and adjust by gauge.",
+   "fix": "Form taps need a bigger drill. Start slightly over the calculated size and adjust by gauge. Example: a 1/4-20 form tap takes a #1 drill for 65% thread, where a cut tap takes a #7.",
    "src": {
     "name": "OSG USA",
     "url": "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319427/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Tap_-_Vol_1_-_IA.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/8-unique-facts-about-thread-forming-taps/"
+    }
+   ]
   },
   {
    "id": "tight-4",
@@ -222,7 +228,13 @@
    "src": {
     "name": "Guhring",
     "url": "https://guhring.com/media/support/Centering-And-Pilot-Drilling-Recommendations.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/choosing-spot-drill/"
+    }
+   ]
   },
   {
    "id": "wander-2",
@@ -231,7 +243,13 @@
    "src": {
     "name": "Guhring",
     "url": "https://guhring.com/media/support/Centering-And-Pilot-Drilling-Recommendations.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/choosing-spot-drill/"
+    }
+   ]
   },
   {
    "id": "wander-3",
@@ -240,7 +258,13 @@
    "src": {
     "name": "OSG USA",
     "url": "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319429/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Drilling-_Vol_1_-_IA.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/reducing-tool-runout/"
+    }
+   ]
   },
   {
    "id": "wander-4",
@@ -258,16 +282,28 @@
    "src": {
     "name": "Guhring",
     "url": "https://guhring.com/media/support/Centering-And-Pilot-Drilling-Recommendations.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/choosing-the-right-pecking-cycle-approach/"
+    }
+   ]
   },
   {
    "id": "wander-6",
    "title": "Angled, curved or uneven entry surface",
-   "fix": "Spot or counterbore first, use a stiff stub drill, and reduce the feed.",
+   "fix": "Spot or counterbore first, use a stiff stub drill, and reduce the feed. On a slope or the side of a round part, flatten the spot with a flat-bottom drill first.",
    "src": {
     "name": "OSG USA",
     "url": "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319429/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Drilling-_Vol_1_-_IA.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/selecting-the-right-harvey-tool-miniature-drill/"
+    }
+   ]
   },
   {
    "id": "wander-7",
@@ -323,7 +359,13 @@
    "src": {
     "name": "OSG USA",
     "url": "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319429/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Drilling-_Vol_1_-_IA.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/choosing-the-right-pecking-cycle-approach/"
+    }
+   ]
   },
   {
    "id": "packing-6",
@@ -332,16 +374,28 @@
    "src": {
     "name": "Sandvik Coromant",
     "url": "https://www.sandvik.coromant.com/en-us/knowledge/drilling/drilling-tips"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/selecting-the-right-harvey-tool-miniature-drill/"
+    }
+   ]
   },
   {
    "id": "packing-7",
    "title": "Low coolant flow or clogged coolant holes",
-   "fix": "Increase coolant flow, clean the filter, and clear the drill's coolant holes.",
+   "fix": "Increase coolant flow, clean the filter, and clear the drill's coolant holes. Put a 5 µm prefilter on through-spindle coolant.",
    "src": {
     "name": "Sandvik Coromant",
     "url": "https://www.sandvik.coromant.com/en-us/knowledge/drilling/drilling-wear-and-troubleshooting"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://harveyperformance.widen.net/content/icmzdcl9s5/pdf/SF_CXZ0000.pdf"
+    }
+   ]
   },
   {
    "id": "packing-8",
@@ -350,7 +404,13 @@
    "src": {
     "name": "OSG USA",
     "url": "https://res.cloudinary.com/osg-usa-inc/image/upload/v1709319429/Literature/03%20-%20Charts%20and%20Guides/Technical%20Guides/OSG_-_Literature_-_Other_-_Technical_Data_-_Drilling-_Vol_1_-_IA.pdf"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/choosing-the-right-pecking-cycle-approach/"
+    }
+   ]
   }
  ],
  "burn": [
@@ -397,7 +457,13 @@
    "src": {
     "name": "Sandvik Coromant",
     "url": "https://www.sandvik.coromant.com/en-us/knowledge/drilling/drilling-wear-and-troubleshooting"
-   }
+   },
+   "also": [
+    {
+     "name": "Harvey Tool",
+     "url": "https://www.harveyperformance.com/in-the-loupe/reducing-tool-runout/"
+    }
+   ]
   },
   {
    "id": "burn-6",
