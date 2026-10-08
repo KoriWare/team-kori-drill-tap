@@ -186,16 +186,30 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:40;pointer-events:none}
 .tp-sheet{max-height:calc(100% - env(safe-area-inset-top) - 12px)}
 
-/* --- Round 1 features (plain scaffold; Maria's visual pass replaces) --- */
-.clsrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
-.clsrow .lbl{margin:0}
-.clsrow .seg{margin-top:0;min-width:96px}
-.clsrow .chip{margin-top:0}
-#cls-info{margin-top:6px}
-.clrrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
-.clrrow .lbl{margin:0 4px 0 0}
-.pill{font:11.5px var(--mono);color:var(--dim);padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:#0b1115}
-.pill b{color:var(--text);font-weight:600}
-.tp-star{flex:none;background:none;border:0;color:var(--dim);font-size:16px;line-height:1;padding:2px 4px;cursor:pointer}
-.tp-star.on{color:var(--gold)}
-.cmp .ro .line.mut{font-size:11px;opacity:.75;margin-top:0;padding-left:8px}
+/* --- Round 1 visual pass (Maria, r1v) --- */
+/* thread class: one framed strip, chip pinned right */
+.clsrow{display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 10px 9px 12px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(90deg,rgba(52,211,153,.06),rgba(11,17,21,.6))}
+.clsrow .lbl{margin:0;flex:none}
+.clsrow .seg{margin-top:0;min-width:92px;flex:none}
+.clsrow .chip{margin:0 0 0 auto;white-space:nowrap}
+#cls-info{font-size:11.5px;margin-top:6px;padding-left:2px}
+/* clearance drill: two cards, label / big size / decimal */
+.clrrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.clrrow>.lbl{grid-column:1/-1;margin:0}
+.pill{display:flex;flex-direction:column;gap:3px;padding:9px 12px 10px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#0e151a,#0b1115);position:relative;overflow:hidden}
+.pill::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--cu)}
+#clr-free::before{background:var(--teal)}
+.pill .pk{font:10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.pill b{font:700 20px var(--disp);color:var(--cu2);line-height:1.1}
+#clr-free b{color:var(--teal)}
+.pill .ps{font:11.5px var(--mono);color:var(--dim)}
+/* favorites star in the picker */
+.tp-star{flex:none;display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px 2px;border-radius:9px;background:none;border:0;color:#4d6170;font-size:17px;line-height:1;cursor:pointer;transition:color .15s,background .15s,transform .15s}
+.tp-star:hover{color:var(--gold);background:rgba(232,197,71,.08)}
+.tp-star.on{color:var(--gold);text-shadow:0 0 10px rgba(232,197,71,.45)}
+.tp-star:active{transform:scale(.88)}
+/* hole depth panel */
+.zstack{display:block;width:100%;height:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px;background:radial-gradient(120% 140% at 50% 0%,rgba(45,212,191,.05),transparent 60%),#0b1115}
+#z-info .info:first-child{margin-top:10px}
+/* DEMO: tap-change sub-line under wear */
+.cmp .ro .line.mut{font-size:10.5px;color:var(--dim);opacity:.85;margin-top:0;padding-left:10px;border-left:1px solid rgba(232,197,71,.35);margin-left:2px}

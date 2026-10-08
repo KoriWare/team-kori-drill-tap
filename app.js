@@ -264,9 +264,10 @@
     if (o.band) {
       const x1 = root + o.band.lo, x2 = root + o.band.hi, w = Math.max(1.5, x2 - x1);
       [[x1, w], [rR - (x2 - root), w]].forEach(([x, bw]) => {
-        band += '<rect x="' + x.toFixed(1) + '" y="22" width="' + bw.toFixed(1) + '" height="176" fill="#2dd4bf" opacity=".18"/>' +
-          '<path d="M' + x.toFixed(1) + " 22 V198 M" + (x + bw).toFixed(1) + ' 22 V198" stroke="#2dd4bf" stroke-width=".8" opacity=".55"/>';
+        band += '<rect x="' + x.toFixed(1) + '" y="22" width="' + bw.toFixed(1) + '" height="176" fill="#34d399" opacity=".26"/>' +
+          '<path d="M' + x.toFixed(1) + " 22 V198 M" + (x + bw).toFixed(1) + ' 22 V198" stroke="#34d399" stroke-width="1" opacity=".9"/>';
       });
+      if (o.band.cls) band += PILL(179, 42, 64, 15, "#34d399") + T(179, 45.5, o.band.cls + " BAND", { s: 8, ls: 0.8, c: "#34d399" });
     }
     s += '<path d="M20 20 H' + root + " L" + P(L) + " L" + root + ' 200 H20Z" fill="url(#xh)" stroke="#3a4c57" stroke-width="1.5" stroke-linejoin="round"/>';
     s += '<path d="M338 20 H' + rR + " L" + P(R) + " L" + rR + ' 200 H338Z" fill="url(#xh)" stroke="#3a4c57" stroke-width="1.5" stroke-linejoin="round"/>';
@@ -388,7 +389,7 @@
     let band = null;
     if (lim && S.tapType === "cut") {
       const nat = (dIn) => (t.system === "metric" ? dIn * IN_MM : dIn);
-      band = { lo: ampOf(C.pctFromDrill(t, "cut", nat(lim.maxIn))), hi: ampOf(C.pctFromDrill(t, "cut", nat(lim.minIn))) };
+      band = { cls: lim.cls, lo: ampOf(C.pctFromDrill(t, "cut", nat(lim.maxIn))), hi: ampOf(C.pctFromDrill(t, "cut", nat(lim.minIn))) };
     }
     svg.innerHTML = drawParallel({
       band, amp: ampOf(p), big: Math.round(p) + "%",
@@ -422,7 +423,7 @@
     const c = C.clearance(t);
     $("clr-row").hidden = !c;
     if (!c) return;
-    const pill = (nm, o) => nm + " <b>" + esc(o.label) + "</b>" + (/mm$/.test(o.label) && S.units === "mm" ? "" : " · " + esc(len(o.dIn)));
+    const pill = (nm, o) => '<span class="pk">' + nm + "</span><b>" + esc(o.label) + "</b>" + '<span class="ps">' + (/mm$/.test(o.label) && S.units === "mm" ? "ISO 273" : esc(len(o.dIn))) + "</span>";
     $("clr-close").innerHTML = pill("Close fit", c.close); $("clr-free").innerHTML = pill("Free fit", c.free);
     $("clr-row").title = c.std;
   }
@@ -443,6 +444,8 @@
       ? "thread " + b(S.depthIn) + " + chamfer " + b(h.chamferIn)
       : "thick " + b(S.depthIn) + " + chamfer " + b(h.chamferIn) + " + 1P " + b(C.pitchIn(t));
     $("z-drill").textContent = C.zWord(h.drillZ, S.units);
+    $("zstack").innerHTML = S.depthIn > 0 ? drawZ(h, t, taper) : "";
+    $("zstack").style.display = S.depthIn > 0 ? "" : "none";
     $("z-drill-s").textContent = S.hole === "blind"
       ? "tap Z + 1P " + b(h.clearIn) + " + point " + b(h.pointIn)
       : "thick + breakout " + b(h.breakIn) + " + point " + b(h.pointIn);
@@ -453,6 +456,34 @@
     infoLines($("z-info"), lines);
   }
   const D_CH = { bottoming: "~2", plug: "~4", taper: "~8" };
+  // Side view of the hole (Maria): Z0 at left, depth to the right. Thread teal, chamfer fading, drill point copper.
+  function drawZ(h, t, taper) {
+    const blind = h.mode === "blind", P = C.pitchIn(t), thick = S.depthIn;
+    const end = Math.max(h.drillZ, blind ? 0 : h.tapZ, thick) || 1;
+    const x0 = 22, x1 = 318, X = (z) => x0 + (z / end) * (x1 - x0);
+    const cy = 52, r = 15, a = 5.5;
+    const partEnd = blind ? 342 : X(thick), full = X(h.drillFull), tip = X(h.drillZ);
+    let s = '<defs><pattern id="zh" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#2a3a44" stroke-width="2"/></pattern></defs>';
+    // part (hatched), hole cut out of it
+    s += '<rect x="' + x0 + '" y="' + (cy - 30) + '" width="' + (partEnd - x0).toFixed(1) + '" height="60" fill="url(#zh)"/>';
+    if (!blind) s += '<path d="M' + partEnd.toFixed(1) + " " + (cy - 30) + " V" + (cy + 30) + '" stroke="#3a4c57" stroke-width="1.5"/>';
+    s += '<path d="M' + x0 + " " + (cy - r) + " H" + full.toFixed(1) + " L" + tip.toFixed(1) + " " + cy + " L" + full.toFixed(1) + " " + (cy + r) + " H" + x0 + 'Z" fill="#0d1a20" stroke="#3a4c57" stroke-width="1.2" stroke-linejoin="round"/>';
+    // thread teeth: real tooth count, clamped so fine pitches still read
+    const thrEnd = !blind ? partEnd : taper ? X(Math.min(thick, h.drillFull)) : X(h.tapZ), fullThr = !blind || taper ? thrEnd : X(thick);
+    const pitchPx = Math.max(4, (X(P) - x0));
+    const teeth = (sgn) => { let d = "M" + x0 + " " + (cy + sgn * r); for (let x = x0; x < thrEnd - 0.5; x += pitchPx) { const amp = x < fullThr ? a : a * Math.max(0, (thrEnd - x) / Math.max(1, thrEnd - fullThr)); const xm = Math.min(x + pitchPx / 2, thrEnd), xe = Math.min(x + pitchPx, thrEnd); d += " L" + xm.toFixed(1) + " " + (cy + sgn * (r + amp)).toFixed(1) + " L" + xe.toFixed(1) + " " + (cy + sgn * r); } return d; };
+    s += '<path d="' + teeth(-1) + '" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linejoin="round"/><path d="' + teeth(1) + '" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linejoin="round"/>';
+    // drill point cone highlighted copper
+    s += '<path d="M' + full.toFixed(1) + " " + (cy - r) + " L" + tip.toFixed(1) + " " + cy + " L" + full.toFixed(1) + " " + (cy + r) + '" fill="none" stroke="#e8894a" stroke-width="1.8" stroke-linejoin="round"/>';
+    s += '<line x1="' + x0 + '" y1="' + cy + '" x2="' + (tip + 6).toFixed(1) + '" y2="' + cy + '" stroke="#93a4ad" stroke-width=".8" stroke-dasharray="2 4" opacity=".55"/>';
+    // Z0, Tap Z (teal, above) and Drill Z (copper, below)
+    s += '<path d="M' + x0 + " 10 V" + (cy + 34) + '" stroke="#93a4ad" stroke-width="1" opacity=".7"/>' + T(x0 + 4, 14, "Z0 TOP", { a: "start", s: 8, ls: 0.6 });
+    const lab = (x, y, txt, c) => { const w = txt.length * 5.6 + 10, cx = Math.min(352 - w / 2, Math.max(x0 + 40 + w / 2, x)); return PILL(cx, y - 3.5, w, 14, c) + T(cx, y, txt, { s: 8.5, c }); };
+    if (!taper) s += '<path d="M' + X(h.tapZ).toFixed(1) + " 18 V" + (cy - r) + '" stroke="#2dd4bf" stroke-width="1.2" stroke-dasharray="3 3"/>' + lab(X(h.tapZ), 14, "TAP " + C.zWord(h.tapZ, S.units), "#2dd4bf");
+    s += '<path d="M' + tip.toFixed(1) + " " + cy + " V" + (cy + 38) + '" stroke="#e8894a" stroke-width="1.2" stroke-dasharray="3 3"/>' + lab(tip, 98, "DRILL " + C.zWord(h.drillZ, S.units), "#e8894a");
+    s += T(x0 + 4, 98, blind ? "BLIND" : "THROUGH", { a: "start", s: 8, ls: 0.8 });
+    return s;
+  }
 
   function renderTap() {
     const t = curThread(), h = hb();

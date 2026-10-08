@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=f1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=f1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=f1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=f1" />
-  <link rel="stylesheet" href="styles.css?v=f1" />
+  <link rel="manifest" href="manifest.webmanifest?v=r1v" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=r1v" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=r1v" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=r1v" />
+  <link rel="stylesheet" href="styles.css?v=r1v" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -124,9 +124,9 @@
       <div class="row">
         <label class="field"><div class="lbl" id="d-depth-lbl">Full thread depth (in)</div><input id="d-depth" type="number" inputmode="decimal" min="0" step="any" /></label>
         <label class="field"><div class="lbl">Tap chamfer</div><select id="t-chamf">
-          <option value="bottoming">Bottoming · ~2 threads</option>
-          <option value="plug" selected>Plug · ~4 threads</option>
-          <option value="taper">Taper · ~8 threads</option>
+          <option value="bottoming">Bottoming · 2 thr</option>
+          <option value="plug" selected>Plug · 4 thr</option>
+          <option value="taper">Taper · 8 thr</option>
         </select></label>
       </div>
       <div class="row">
@@ -137,6 +137,7 @@
           </div>
         </div>
       </div>
+      <svg class="zstack" id="zstack" viewBox="0 0 358 104" role="img" aria-label="Side view of the hole: thread, tap chamfer, clearance and drill point, with Tap Z and Drill Z marked"></svg>
       <div class="readouts">
         <div class="ro t"><div class="lbl">Tap to Z</div><div class="v" id="z-tap">—</div><div class="s" id="z-tap-s"></div></div>
         <div class="ro c"><div class="lbl">Drill to Z</div><div class="v" id="z-drill">—</div><div class="s" id="z-drill-s"></div></div>
@@ -267,8 +268,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=f1"></script>
-<script src="calc.js?v=f1"></script>
-<script src="app.js?v=f1"></script>
+<script src="data.js?v=r1v"></script>
+<script src="calc.js?v=r1v"></script>
+<script src="app.js?v=r1v"></script>
 </body>
 </html>
