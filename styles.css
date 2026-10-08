@@ -180,3 +180,8 @@ header h1 span{color:var(--cu2)}
   .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
   .hero svg#xsec{display:block;max-width:620px;margin:0 auto}
 }
+/* Home Screen (standalone, black-translucent status bar): keep the header below the clock/notch (sa1) */
+.wrap{padding-top:calc(18px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right))}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:rgba(10,14,17,.94);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:40;pointer-events:none}
+.tp-sheet{max-height:calc(100% - env(safe-area-inset-top) - 12px)}
