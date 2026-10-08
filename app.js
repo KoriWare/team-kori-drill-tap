@@ -187,21 +187,35 @@
   }
 
   // ------------------------------------------------------------ hardness
-  function hb() {
+  // Hardness the math uses. Empty / invalid / off-scale input never blanks the results:
+  // empty or soft-below-HRC -> material's typical HB (flagged); harder than the table -> table max (conservative).
+  function hbInfo() {
+    const typ = C.material($("mat").value).defaultHB;
+    const T = D.HRC_HB, hrcMin = T[0][0], hrcMax = T[T.length - 1][0];
     const v = num($("hard"));
-    if (!(v > 0)) return NaN;
-    return S.scale === "HB" ? v : C.hrcToHb(v);
+    if (!(v > 0)) return { hb: typ, src: (S.scale === "HRC" && !Number.isFinite(C.hbToHrc(typ))) ? "soft" : "typical" };
+    if (S.scale === "HB") return { hb: v, src: "entered" };
+    if (v < hrcMin) return { hb: typ, src: "soft" };
+    if (v > hrcMax) return { hb: T[T.length - 1][1], src: "max" };
+    return { hb: C.hrcToHb(v), src: "entered" };
   }
+  function hb() { return hbInfo().hb; }
   function setHardFromHB(hbv) {
-    if (S.scale === "HB") $("hard").value = Math.round(hbv);
-    else { const r = C.hbToHrc(hbv); $("hard").value = Number.isFinite(r) ? Math.round(r) : ""; }
+    const inp = $("hard");
+    if (S.scale === "HB") { inp.value = Math.round(hbv); inp.placeholder = ""; }
+    else {
+      const r = C.hbToHrc(hbv);
+      inp.value = Number.isFinite(r) ? Math.round(r) : "";
+      inp.placeholder = Number.isFinite(r) ? "" : "soft";
+    }
   }
   function hardNote() {
-    const v = num($("hard")), h = hb();
-    if (!(v > 0)) return "Enter the hardness.";
-    if (!Number.isFinite(h)) return S.scale === "HRC" ? "HRC value outside the conversion table — switch to HB." : "";
-    if (S.scale === "HB") { const r = C.hbToHrc(h); return Number.isFinite(r) ? "≈ " + r.toFixed(0) + " HRC" : "Below the HRC scale (soft)."; }
-    return "≈ " + Math.round(h) + " HB";
+    const i = hbInfo(), h = Math.round(i.hb);
+    if (i.src === "typical") return "Blank, so using " + h + " HB, typical for this material. Type your own to override.";
+    if (i.src === "soft") return "Too soft for the HRC scale, so using " + h + " HB, typical for this material. Switch to HB to enter your own.";
+    if (i.src === "max") return "Above the conversion table. Using " + h + " HB (the hardest value) to stay conservative.";
+    if (S.scale === "HB") { const r = C.hbToHrc(i.hb); return Number.isFinite(r) ? "\u2248 " + r.toFixed(0) + " HRC" : "Below the HRC scale (soft)."; }
+    return "\u2248 " + h + " HB";
   }
 
   // ------------------------------------------------------------ cross-section SVG
@@ -351,7 +365,7 @@
     ov = ov > 0 ? (S.units === "mm" ? ov * D.M_TO_SFM : ov) : 0;
     const ts = C.tapStart($("mat").value, S.tapType, $("tapmat").value, h, t, ov);
     if (!ts.ok) {
-      $("t-rpm").textContent = "—"; $("t-feed").textContent = "—"; $("t-rpm-s").textContent = ""; $("t-feed-s").textContent = "";
+      $("t-rpm").textContent = "—"; $("t-feed").textContent = "—"; $("t-rpm-s").textContent = ts.blocked ? "blocked · see note below" : "see note below"; $("t-feed-s").textContent = "";
       $("t-code").textContent = "—";
       infoLines($("t-info"), [{ c: ts.blocked ? "bad" : "warn", t: ts.reason || "Check inputs." }]);
       return;
@@ -383,6 +397,7 @@
     const ids = ["d-sfm", "d-rpm", "d-ipr", "d-ipm"];
     if (!ds.ok) {
       ids.forEach((i) => { $(i).textContent = "—"; $(i + "-s").textContent = ""; });
+      $("d-rpm-s").textContent = ds.blocked ? "blocked · see note below" : "see note below";
       setChip($("d-chip"), ds.blocked ? "red" : "amber", ds.blocked ? "Blocked" : "No data");
       infoLines($("d-info"), [{ c: ds.blocked ? "bad" : "warn", t: ds.reason }]);
       return;
@@ -533,3 +548,8 @@
   }
   document.addEventListener("DOMContentLoaded", init);
 })();
+
+// Offline support (shop floor, no signal)
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
