@@ -547,6 +547,24 @@
     setTapType("cut");
   }
   document.addEventListener("DOMContentLoaded", init);
+  // "Example" tag: page opens on a worked example (1/4-20, 1018). Hide it after the user's
+  // first real edit, or right away when they arrive on a shared/deep link.
+  function exampleTag() {
+    const tag = $("example-tag"); if (!tag) return;
+    if (/(?:^#|&)t=/.test(location.hash)) { tag.hidden = true; return; }
+    const hide = (e) => {
+      if (!e.isTrusted) return;
+      if (e.type === "click") {
+        const t = e.target;
+        if (!(t.closest && (t.closest(".tp-opt") || t.closest("#tt-cut,#tt-form,#h-hb,#h-hrc")))) return;
+      } else if (e.target && e.target.id === "tp-q") return; // typing in search alone isn't a change
+      tag.hidden = true;
+      ["input", "change", "click"].forEach((ev) => document.removeEventListener(ev, hide, true));
+    };
+    ["input", "change", "click"].forEach((ev) => document.addEventListener(ev, hide, true));
+  }
+  document.addEventListener("DOMContentLoaded", exampleTag);
+
 })();
 
 // Offline support (shop floor, no signal)
