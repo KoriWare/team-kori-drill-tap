@@ -320,3 +320,6 @@ body.is-ins .ins-t b{color:var(--cu2)}
 .ins-jump:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 .ins-jump[hidden]{display:none}
 #ins-acc{scroll-margin-top:12px}
+/* phones: thread-class row wraps instead of pushing the chip off-screen (Maria, QA Oct 8) */
+.clsrow{flex-wrap:wrap;row-gap:6px}
+.clsrow .chip{max-width:100%}

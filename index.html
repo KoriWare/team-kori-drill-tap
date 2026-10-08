@@ -55,7 +55,7 @@
         <p><b>10. Inserts (STI).</b> Turn on <b>Insert (STI)</b> under the thread to repair a stripped hole or put a stronger thread in soft metal. <b>Jump to Inserts</b> takes you straight to the section. It gives the STI drill, the STI tap, a % thread check, insert lengths from 1×D to 3×D with hole depth and Tap Z for each, a Fanuc STI tap block and the install steps. When the Heli-Coil, Recoil and Emuge charts disagree on a size, buttons let you pick which chart to follow. Anything your chart doesn't publish comes from Heli-Coil and is tagged in copper. The section only shows for sizes the charts cover, and not for pipe threads. <b>Repair or scrap?</b> (DEMO $) compares the cost to repair with an insert against a new part, using sample numbers you can type over.</p>
         <p><b>Every speed and feed is a conservative starting point</b> from published maker charts (Morse, Redline, Tru-Edge, Haas, OSG, Gühring, Emuge). Harvey Tool is listed as a second source where its miniature carbide drill chart agrees. Harder material lowers the numbers or blocks them. Always check your own tool maker's chart and listen to the cut.</p>
         <p><b>in | mm</b> in the header flips every length, feed and the G-code (G20 / G21).</p>
-        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Method: cost per hole = (tap price + change time) ÷ holes per tap, plus breakage. Dollar defaults are samples, not published data. Type your own to estimate. They stay on your device and aren't in the share link.</p>
+        <p><b>DEMO $</b> (gold, bottom): sample numbers only. Wear cost includes the time to swap a worn tap (Tap change min). Method: cost per hole = (tap price + change time) ÷ holes per tap, plus breakage. Dollar defaults are samples, not published data. Type your own to estimate. They stay on your device.</p>
         <p><b>On a PC</b> the tap and drill panels sit side by side. <b>On a phone</b>, add it to your Home Screen and it works offline after the first visit.</p>
       </details>
     </section>
@@ -268,7 +268,7 @@
             <label class="field"><div class="lbl">Holes / STI tap</div><input id="r-life" type="number" inputmode="numeric" min="1" step="1" value="500" /></label>
           </div>
           <div class="rep-out" id="rep-out" aria-live="polite"></div>
-          <div class="info">Uses Part value and Shop rate from above. <b>Sources:</b> simple arithmetic, repair = insert + STI tap ÷ holes per tap + repair minutes × shop rate, compared with the part value. Dollar defaults are samples, not published prices.</div>
+          <div class="info">Uses Part value and Shop rate from DEMO $ below. <b>Sources:</b> simple arithmetic, repair = insert + STI tap ÷ holes per tap + repair minutes × shop rate, compared with the part value. Dollar defaults are samples, not published prices.</div>
         </div>
         <div class="info src" id="ins-src"></div>
       </details>
@@ -292,7 +292,7 @@
         <label class="toggle"><input type="checkbox" id="demo-on" checked /> show</label>
       </div>
       <div id="demo-body">
-        <div class="info">Sample numbers only. Type your own to estimate. They stay on your device and aren't in the share link.</div>
+        <div class="info">Sample numbers only. Type your own to estimate. They stay on your device.</div>
         <div class="row">
           <label class="field"><div class="lbl">Part value $</div><input id="c-part" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field"><div class="lbl">Lost time min</div><input id="c-min" type="number" inputmode="decimal" min="0" step="any" /></label>
