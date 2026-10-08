@@ -11,6 +11,7 @@
   const SYMPTOMS = [
     { id: "broke", ic: "💥", name: "Tap broke" },
     { id: "oversize", ic: "⭕", name: "Thread oversize" },
+    { id: "tight", ic: "🔩", name: "Thread tight" },
     { id: "wander", ic: "↗", name: "Drill wanders" },
     { id: "packing", ic: "🌀", name: "Chips packing" },
     { id: "burn", ic: "🔥", name: "Drill burns" },
@@ -66,6 +67,14 @@
       "</b> (a " + mm(tap) + " tap, a " + mm(part) + " part, and " + min + " minutes at " + mm(rate) + "/hr). Type your own numbers in DEMO $ below.</div>";
   }
 
+  // Per-card source: { name, url } (real data) or a plain string.
+  function srcLink(src) {
+    if (!src) return "";
+    if (typeof src === "string") return '<div class="s">Source: ' + esc(src) + "</div>";
+    const ok = /^https:\/\//.test(src.url || "");
+    return '<div class="s">Source: ' + (ok ? '<a href="' + esc(src.url) + '" target="_blank" rel="noopener">' + esc(src.name) + "</a>" : esc(src.name)) + "</div>";
+  }
+
   function render() {
     const st = window.DT_STATE; if (!st || !$("ts-sym")) return;
     const D = window.DT_DATA || {}, C = window.DT_CALC || {};
@@ -75,7 +84,8 @@
     const byId = {}; checks.forEach((c) => { byId[c.id] = c; });
     const liveIn = (sid) => (data[sid] || []).filter((c) => byId[c.id] && byId[c.id].level === "live").length;
     const okIn = (sid) => (data[sid] || []).filter((c) => byId[c.id] && byId[c.id].level === "ok").length;
-    const liveIds = new Set(checks.filter((c) => c.level === "live").map((c) => c.id));
+    const known = new Set(Object.keys(data).reduce((a, k) => a.concat(data[k].map((c) => c.id)), []));
+    const liveIds = new Set(checks.filter((c) => c.level === "live" && known.has(c.id)).map((c) => c.id));
     $("ts-badge").textContent = liveIds.size ? liveIds.size + (liveIds.size === 1 ? " FLAG" : " FLAGS") : "ALL CLEAR";
     $("ts-badge").className = "ts-badge" + (liveIds.size ? "" : " ok");
     $("ts-sample").hidden = real;
@@ -94,11 +104,10 @@
       const k = byId[c.id], cls = k ? (k.level === "live" ? " live" : " ok") : "";
       h += '<div class="fx' + cls + '"><div class="t">' + esc(c.title) + (k ? '<span class="tag">' + (k.level === "live" ? "YOUR SETTINGS" : "CHECKED") + "</span>" : "") + "</div>" +
         (c.why ? '<div class="why">' + esc(c.why) + "</div>" : "") + (c.fix ? '<div class="do"><b>Fix:</b> ' + esc(c.fix) + "</div>" : "") +
-        (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + "</div>";
+        (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
     });
     if (sel === "broke") h += demoLine();
-    const srcs = []; cards.forEach((c) => { if (c.src && srcs.indexOf(c.src) < 0) srcs.push(c.src); });
-    h += '<div class="info src"><b>Sources:</b> ' + (srcs.length ? srcs.map(esc).join(" · ") : "coming from Jenny's research, one per fix.") + "</div>";
+    if (!real) h += '<div class="info src"><b>Sources:</b> coming from Jenny\'s research, one per fix.</div>';
     $("ts-body").innerHTML = h;
   }
 
