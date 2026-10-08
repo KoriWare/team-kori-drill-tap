@@ -220,6 +220,7 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 .ts details.acc>summary .lbl{color:var(--text)}
 .ts-badge{margin-left:auto;font:700 10.5px var(--mono);letter-spacing:.08em;color:var(--amber);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.45);padding:2px 8px;border-radius:999px}
 .ts-badge.ok{color:var(--green);background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.4)}
+.ts-badge.red{color:var(--red);background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5)}
 .ts-sub{font-size:12px;color:var(--dim);margin-top:8px}
 .ts-sample{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px dashed rgba(232,197,71,.5);border-radius:8px;padding:4px 8px;margin-top:8px;text-align:center}
 .ts-sym{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
@@ -248,6 +249,12 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 .fx .s{margin-top:7px;font-size:11px;color:var(--mut,#8b98a5)}
 .fx .s a{color:#7fd8cc;text-decoration:underline;text-decoration-color:rgba(45,212,191,.4);text-underline-offset:2px}
 .fx.ok .you{color:var(--green);background:rgba(52,211,153,.08)}
+.fx.red{border-color:rgba(248,113,113,.55);background:linear-gradient(180deg,rgba(248,113,113,.09),#0b1115)}
+.fx.red::before{background:var(--red);box-shadow:0 0 10px rgba(248,113,113,.6)}
+.fx.red .tag{color:var(--red);border-color:rgba(248,113,113,.55);background:rgba(248,113,113,.1)}
+.fx.red .you{color:var(--red);background:rgba(248,113,113,.08)}
+.hint.bad{color:var(--red);font-weight:600;padding-left:16px;position:relative}
+.hint.bad::before{content:"!";position:absolute;left:0;top:0;width:12px;height:12px;border-radius:50%;background:var(--red);color:#0b1115;font:800 9px/12px var(--mono);text-align:center}
 .ts-cost{margin-top:10px;padding:10px 12px;border:1px dashed rgba(232,197,71,.55);border-radius:12px;background:rgba(232,197,71,.05);font-size:12px;color:#e9dca0;line-height:1.45}
 .ts-cost .lbl{color:var(--gold);margin-bottom:3px}
 .ts-cost b{color:var(--gold);font:700 14px var(--mono)}

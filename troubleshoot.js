@@ -88,7 +88,8 @@
     const known = new Set(Object.keys(data).reduce((a, k) => a.concat(data[k].map((c) => c.id)), []));
     const liveIds = new Set(checks.filter((c) => c.level === "live" && known.has(c.id)).map((c) => c.id));
     $("ts-badge").textContent = liveIds.size ? liveIds.size + (liveIds.size === 1 ? " FLAG" : " FLAGS") : "ALL CLEAR";
-    $("ts-badge").className = "ts-badge" + (liveIds.size ? "" : " ok");
+    const anyRed = checks.some((c) => c.level === "live" && c.sev === "red" && known.has(c.id));
+    $("ts-badge").className = "ts-badge" + (liveIds.size ? (anyRed ? " red" : "") : " ok");
     $("ts-sample").hidden = real;
     $("ts-sym").innerHTML = SYMPTOMS.map((s) => {
       const n = liveIn(s.id);
@@ -102,7 +103,7 @@
     let h = '<div class="ts-h"><span class="lbl">' + esc(sym.name) + (sel === "fanuc" ? "" : " · likely causes") + "</span>" +
       (nl ? '<span class="lbl a">' + nl + " match you</span>" : no ? '<span class="lbl g">' + no + " checked</span>" : "") + "</div>";
     cards.forEach((c) => {
-      const k = byId[c.id], cls = k ? (k.level === "live" ? " live" : " ok") : "";
+      const k = byId[c.id], cls = k ? (k.level === "live" ? (k.sev === "red" ? " live red" : " live") : " ok") : "";
       h += '<div class="fx' + cls + '"><div class="t">' + esc(c.title) + (k ? '<span class="tag">' + (k.level === "live" ? (k.sev === "red" ? "HIGH RISK" : "YOUR SETTINGS") : "CHECKED") + "</span>" : "") + "</div>" +
         (c.why ? '<div class="why">' + esc(c.why) + "</div>" : "") + (c.fix ? '<div class="do"><b>Fix:</b> ' + esc(c.fix) + "</div>" : "") +
         (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
