@@ -416,34 +416,55 @@
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(() => done(true), fallback); else fallback();
   }
 
+  // Size an editable readout to its number so the unit sits right after it.
+  function fitIn(el) { el.style.width = Math.max(2, String(el.value || el.placeholder || "").length + 0.6) + "ch"; }
+
+  function drillEff(ds) {
+    let sfm = ds.sfm, rpm = ds.rpm, ipr = ds.ipr;
+    const o = S.dOwnSpeed;
+    if (o && o.kind === "sfm") { sfm = o.v; rpm = Math.floor(C.rpmFromSfm(sfm, S.dDiaIn)); }
+    else if (o && o.kind === "rpm") { rpm = Math.round(o.v); sfm = C.sfmFromRpm(rpm, S.dDiaIn); }
+    if (S.dOwnIpr > 0) ipr = S.dOwnIpr;
+    return Object.assign({}, ds, { sfm, rpm, ipr, ipm: rpm * ipr });
+  }
+
   function renderDrill() {
     if (S.dLinked && lastRec) S.dDiaIn = lastRec.dIn;
     if (document.activeElement !== $("d-dia")) $("d-dia").value = S.units === "mm" ? (S.dDiaIn * IN_MM).toFixed(2) : S.dDiaIn.toFixed(4);
     if (document.activeElement !== $("d-depth")) $("d-depth").value = S.units === "mm" ? (S.depthIn * IN_MM).toFixed(1) : S.depthIn.toFixed(3);
     const ds = C.drillStart($("mat").value, $("drillmat").value, hb(), S.dDiaIn, S.depthIn);
-    const ids = ["d-sfm", "d-rpm", "d-ipr", "d-ipm"];
+    const mm = S.units === "mm";
+    $("d-sfm-u").textContent = mm ? "m/min" : "SFM"; $("d-ipr-u").textContent = mm ? "mm/rev" : "ipr";
+    const edIds = ["d-sfm", "d-rpm", "d-ipr"];
     if (!ds.ok) {
-      ids.forEach((i) => { $(i).textContent = "—"; $(i + "-s").textContent = ""; });
+      edIds.forEach((i) => { $(i).value = ""; $(i).disabled = true; $(i + "-s").textContent = ""; });
+      $("d-ipm").textContent = "—"; $("d-ipm-s").textContent = "";
       $("d-rpm-s").textContent = ds.blocked ? "blocked · see note below" : "see note below";
       setChip($("d-chip"), ds.blocked ? "red" : "amber", ds.blocked ? "Blocked" : "No data");
       $("d-code").textContent = "—";
       infoLines($("d-info"), [{ c: ds.blocked ? "bad" : "warn", t: ds.reason }]);
       return;
     }
-    const mm = S.units === "mm";
-    $("d-sfm").innerHTML = mm ? Math.round(ds.sfm / D.M_TO_SFM) + " <small>m/min</small>" : Math.round(ds.sfm) + " <small>SFM</small>";
-    $("d-sfm-s").textContent = "range to " + (mm ? Math.round(ds.sfmHi / D.M_TO_SFM) : Math.round(ds.sfmHi));
-    $("d-rpm").innerHTML = ds.rpm + " <small>rpm</small>";
-    $("d-rpm-s").textContent = "to " + ds.rpmHi + " rpm";
-    $("d-ipr").innerHTML = mm ? (ds.ipr * IN_MM).toFixed(3) + " <small>mm/rev</small>" : dec(ds.ipr, 4) + " <small>ipr</small>";
-    $("d-ipr-s").textContent = "range to " + (mm ? (ds.iprHi * IN_MM).toFixed(3) : dec(ds.iprHi, 4));
-    $("d-ipm").innerHTML = mm ? Math.round(ds.ipm * IN_MM) + " <small>mm/min</small>" : ds.ipm.toFixed(1) + " <small>ipm</small>";
-    $("d-ipm-s").textContent = "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
+    edIds.forEach((i) => { $(i).disabled = false; });
+    const e = drillEff(ds), o = S.dOwnSpeed, ownIpr = S.dOwnIpr > 0;
+    const setIn = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v; fitIn($(id)); };
+    setIn("d-sfm", Math.round(mm ? e.sfm / D.M_TO_SFM : e.sfm));
+    setIn("d-rpm", e.rpm);
+    setIn("d-ipr", mm ? (e.ipr * IN_MM).toFixed(3) : e.ipr.toFixed(4));
+    const reset = (k) => 'yours · <button type="button" class="linkbtn" data-dreset="' + k + '">use calculated</button>';
+    const sfmRange = "range to " + (mm ? Math.round(ds.sfmHi / D.M_TO_SFM) : Math.round(ds.sfmHi));
+    $("d-sfm-s").innerHTML = o ? (o.kind === "sfm" ? reset("speed") : "from your rpm") : sfmRange;
+    $("d-rpm-s").innerHTML = o ? (o.kind === "rpm" ? reset("speed") : "from your speed") : "to " + ds.rpmHi + " rpm";
+    $("d-ipr-s").innerHTML = ownIpr ? reset("ipr") : "range to " + (mm ? (ds.iprHi * IN_MM).toFixed(3) : dec(ds.iprHi, 4));
+    $("d-ipm").innerHTML = mm ? Math.round(e.ipm * IN_MM) + " <small>mm/min</small>" : e.ipm.toFixed(1) + " <small>ipm</small>";
+    $("d-ipm-s").textContent = o || ownIpr ? "rpm × feed/rev" : "to " + (mm ? Math.round(ds.ipmHi * IN_MM) : ds.ipmHi.toFixed(1));
     setChip($("d-chip"), ds.peck.level, ds.peck.text.split(":")[0].split(".")[0]);
-    const db = C.drillBlock(ds, S.units);
+    const db = C.drillBlock(e, S.units);
     $("d-code").innerHTML = db.lines.map((l) => esc(l).replace(/^(G8[013]|G73)/, '<span class="k">$1</span>').replace(/ M03$/, ' <span class="k">M03</span>')).join("<br>");
     const lines = [{ c: ds.peck.level === "green" ? "" : ds.peck.level === "amber" ? "warn" : "bad", t: ds.peck.text + (ds.peck.q ? " Q = " + len(ds.peck.q) + "." : "") }];
     lines.push("Fill in X Y (hole position), Z (depth incl. drill point) and R (retract plane)." + (db.cycle !== "G81" ? " Q is the peck depth." : ""));
+    if (e.sfm > ds.sfmHi * 1.005) lines.push({ c: "warn", t: "Your speed is above the top of the published range (" + (mm ? Math.round(ds.sfmHi / D.M_TO_SFM) + " m/min" : Math.round(ds.sfmHi) + " SFM") + "). Your call." });
+    if (e.ipr > ds.iprHi * 1.005) lines.push({ c: "warn", t: "Your feed/rev is above the top of the published range (" + (mm ? (ds.iprHi * IN_MM).toFixed(3) + " mm/rev" : dec(ds.iprHi, 4) + " ipr") + "). Your call." });
     lines.push("Depth " + ds.ld.toFixed(1) + "×D. Low end used; the high end is the most aggressive published value (info only).");
     if (ds.sfmStart) lines.push("Haas 'starting' SFM for this insert drill: " + (mm ? Math.round(ds.sfmStart / D.M_TO_SFM) + " m/min" : Math.round(ds.sfmStart) + " SFM") + ".");
     ds.notes.forEach((n) => lines.push({ c: "warn", t: n }));
@@ -564,6 +585,15 @@
     $("tapmat").onchange = renderTap; $("tap-ov").oninput = tapOwnInput; $("tap-ov").onblur = renderTap;
     $("tap-ov-hint").onclick = (e) => { if (!e.target.closest("#tap-ov-reset")) return; e.preventDefault(); S.tapOwn = false; renderTap(); };
     $("drillmat").onchange = renderDrill;
+    $("d-sfm").oninput = () => { const v = num($("d-sfm")); S.dOwnSpeed = v > 0 ? { kind: "sfm", v: S.units === "mm" ? v * D.M_TO_SFM : v } : null; renderDrill(); };
+    $("d-rpm").oninput = () => { const v = num($("d-rpm")); S.dOwnSpeed = v > 0 ? { kind: "rpm", v } : null; renderDrill(); };
+    $("d-ipr").oninput = () => { const v = num($("d-ipr")); S.dOwnIpr = v > 0 ? (S.units === "mm" ? v / IN_MM : v) : null; renderDrill(); };
+    ["d-sfm", "d-rpm", "d-ipr"].forEach((i) => { $(i).onblur = renderDrill; $(i).addEventListener("input", () => fitIn($(i))); });
+    $("d-sfm-s").parentNode.parentNode.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-dreset]"); if (!b) return; ev.preventDefault();
+      if (b.dataset.dreset === "speed") S.dOwnSpeed = null; else S.dOwnIpr = null;
+      renderDrill();
+    });
     $("d-link").onchange = () => { S.dLinked = $("d-link").checked; renderDrill(); };
     $("d-dia").oninput = () => {
       const v = num($("d-dia")); if (!(v > 0)) return;

@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=cb1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=cb1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=cb1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=cb1" />
-  <link rel="stylesheet" href="styles.css?v=cb1" />
+  <link rel="manifest" href="manifest.webmanifest?v=de1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=de1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=de1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=de1" />
+  <link rel="stylesheet" href="styles.css?v=de1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -124,9 +124,9 @@
         <label class="field"><div class="lbl" id="d-depth-lbl">Hole depth (in)</div><input id="d-depth" type="number" inputmode="decimal" min="0" step="any" /></label>
       </div>
       <div class="readouts">
-        <div class="ro"><div class="lbl" id="d-sfm-lbl">SFM</div><div class="v" id="d-sfm">—</div><div class="s" id="d-sfm-s"></div></div>
-        <div class="ro"><div class="lbl">Spindle</div><div class="v" id="d-rpm">—</div><div class="s" id="d-rpm-s"></div></div>
-        <div class="ro"><div class="lbl" id="d-ipr-lbl">Feed / rev</div><div class="v" id="d-ipr">—</div><div class="s" id="d-ipr-s"></div></div>
+        <label class="ro ed"><div class="lbl" id="d-sfm-lbl">Speed</div><div class="vin"><input id="d-sfm" type="number" inputmode="decimal" min="0" step="any" placeholder="—" /><small id="d-sfm-u">SFM</small></div><div class="s" id="d-sfm-s"></div></label>
+        <label class="ro ed"><div class="lbl">Spindle</div><div class="vin"><input id="d-rpm" type="number" inputmode="numeric" min="0" step="1" placeholder="—" /><small>rpm</small></div><div class="s" id="d-rpm-s"></div></label>
+        <label class="ro ed"><div class="lbl" id="d-ipr-lbl">Feed / rev</div><div class="vin"><input id="d-ipr" type="number" inputmode="decimal" min="0" step="any" placeholder="—" /><small id="d-ipr-u">ipr</small></div><div class="s" id="d-ipr-s"></div></label>
         <div class="ro t"><div class="lbl" id="d-ipm-lbl">Feed / min</div><div class="v" id="d-ipm">—</div><div class="s" id="d-ipm-s"></div></div>
       </div>
       <div class="chip" id="d-chip"><i></i><span>—</span></div>
@@ -218,8 +218,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=cb1"></script>
-<script src="calc.js?v=cb1"></script>
-<script src="app.js?v=cb1"></script>
+<script src="data.js?v=de1"></script>
+<script src="calc.js?v=de1"></script>
+<script src="app.js?v=de1"></script>
 </body>
 </html>

@@ -165,3 +165,12 @@ header h1 span{color:var(--cu2)}
 /* keep each G-code block on one line; scroll sideways instead of wrapping */
 .codewrap .code{white-space:pre;overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media (max-width:400px){.codewrap .code{font-size:12px;padding:10px}}
+/* editable drill readouts */
+.ro.ed{display:block;cursor:text}
+.ro.ed:focus-within{border-color:rgba(45,212,191,.6)}
+.ro .vin{display:flex;align-items:baseline;gap:6px;margin-top:4px;min-width:0}
+.ro .vin input{flex:0 1 auto;min-width:2ch;max-width:100%;font:600 24px var(--mono);font-variant-numeric:tabular-nums;color:var(--text);background:none;border:0;border-bottom:1px dashed rgba(45,212,191,.35);border-radius:0;padding:0 0 1px;outline:none;-moz-appearance:textfield;appearance:textfield}
+.ro .vin input::-webkit-inner-spin-button,.ro .vin input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ro .vin input:focus{border-bottom-color:var(--teal)}
+.ro .vin input:disabled{border-bottom-color:transparent;color:var(--dim)}
+.ro .vin small{font-size:12px;color:var(--dim);flex:none}
