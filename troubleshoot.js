@@ -120,7 +120,7 @@
         (k && k.you ? '<span class="you">' + esc(k.you) + "</span>" : "") + srcLink(c.src) + "</div>";
     });
     if (sel === "broke") h += demoLine();
-    if (sel === "oversize") h += repairLine();
+    if (sel === "oversize" && window.DT_INSERT_AVAIL) h += repairLine();
     if (!real) h += '<div class="info src"><b>Sources:</b> coming from Jenny\'s research, one per fix.</div>';
     $("ts-body").innerHTML = h;
   }

@@ -68,6 +68,16 @@
     const t = st.thread, S = st.S || {}, units = S.units;
     const C = window.DT_CALC || {};
     let d = null; try { d = typeof C.sti === "function" ? C.sti(t, S) : null; } catch (e) { d = null; }
+    // Live only with sourced data: no DT_CALC.sti, or null for this size, hides the section, the switch and the Troubleshoot button.
+    // (#ins-preview in the URL shows the gold-labeled sample frame for design reviews.)
+    const preview = /ins-preview/.test(location.hash);
+    const show = !!d || (preview && typeof C.sti !== "function");
+    const sec = $("ins-acc").closest("section"); sec.hidden = !show;
+    const sw = $("ins-sw"); if (sw) sw.hidden = !show;
+    const chip = $("ins-chip"); if (chip) chip.hidden = !show || !window.DT_INSERT;
+    const was = window.DT_INSERT_AVAIL; window.DT_INSERT_AVAIL = show;
+    if (was !== show) document.dispatchEvent(new CustomEvent("dt:insert", { detail: { on: !!window.DT_INSERT } }));
+    if (!show) return;
     $("ins-sample").hidden = !!d;
     const pipe = !t || t.pipe;
     $("ins-badge").textContent = pipe ? "N/A" : t.label + " STI";
@@ -95,7 +105,7 @@
     try { localStorage.setItem("dt-ins", on ? "1" : "0"); } catch (e) {}
     const cb = $("ins-on"); if (cb) cb.checked = !!on;
     document.body.classList.toggle("is-ins", !!on);
-    const chip = $("ins-chip"); if (chip) chip.hidden = !on;
+    const chip = $("ins-chip"); if (chip) chip.hidden = !on || window.DT_INSERT_AVAIL === false;
     const note = $("ins-note");
     const ready = window.DT_CALC && typeof window.DT_CALC.sti === "function";
     if (note) { note.textContent = on ? (ready ? "STI sizes for this thread are open in Inserts below" : "Inserts section is open below · STI sizes on the way from Jenny") : NOTE_OFF; note.className = on && !ready ? "wait" : ""; }
