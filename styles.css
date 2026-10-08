@@ -154,3 +154,4 @@ header h1 span{color:var(--cu2)}
 .example-tag[hidden]{display:none}
 
 #tp:focus{outline:none}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--teal);text-decoration:underline;cursor:pointer}

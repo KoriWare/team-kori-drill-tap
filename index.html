@@ -9,11 +9,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drill &amp; Tap" />
   <title>Drill &amp; Tap · Team Kori</title>
-  <link rel="manifest" href="manifest.webmanifest?v=kb1" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=kb1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=kb1" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=kb1" />
-  <link rel="stylesheet" href="styles.css?v=kb1" />
+  <link rel="manifest" href="manifest.webmanifest?v=sfm1" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=sfm1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=sfm1" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=sfm1" />
+  <link rel="stylesheet" href="styles.css?v=sfm1" />
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to calculator</a>
@@ -103,7 +103,7 @@
       <div class="lbl" id="tap-lbl">Rigid tap · Fanuc</div>
       <div class="row">
         <label class="field" style="flex:2"><div class="lbl">Tap material</div><select id="tapmat"></select></label>
-        <label class="field"><div class="lbl" id="tap-ov-lbl">Own SFM</div><input id="tap-ov" type="number" inputmode="decimal" min="0" placeholder="auto" /></label>
+        <label class="field"><div class="lbl" id="tap-ov-lbl">Tap SFM</div><input id="tap-ov" type="number" inputmode="decimal" min="0" step="any" placeholder="—" aria-describedby="tap-ov-hint" /><div class="hint" id="tap-ov-hint">calculated · type to change</div></label>
       </div>
       <div class="readouts">
         <div class="ro"><div class="lbl">Spindle</div><div class="v" id="t-rpm">—</div><div class="s" id="t-rpm-s"></div></div>
@@ -217,8 +217,8 @@
     <div class="tp-list" id="tp-list" role="listbox" aria-label="Thread sizes"></div>
   </div>
 </div>
-<script src="data.js?v=kb1"></script>
-<script src="calc.js?v=kb1"></script>
-<script src="app.js?v=kb1"></script>
+<script src="data.js?v=sfm1"></script>
+<script src="calc.js?v=sfm1"></script>
+<script src="app.js?v=sfm1"></script>
 </body>
 </html>

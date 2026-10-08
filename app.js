@@ -369,9 +369,13 @@
 
   function renderTap() {
     const t = curThread(), h = hb();
-    let ov = num($("tap-ov"));
-    ov = ov > 0 ? (S.units === "mm" ? ov * D.M_TO_SFM : ov) : 0;
+    const inp = $("tap-ov"), mmU = S.units === "mm";
+    let ov = S.tapOwn ? num(inp) : 0;
+    ov = ov > 0 ? (mmU ? ov * D.M_TO_SFM : ov) : 0;
     const ts = C.tapStart($("mat").value, S.tapType, $("tapmat").value, h, t, ov);
+    // Show the calculated speed in the box until the user types their own.
+    if (!S.tapOwn && document.activeElement !== inp) inp.value = ts.ok && ts.sfm > 0 ? Math.round(mmU ? ts.sfm / D.M_TO_SFM : ts.sfm) : "";
+    tapHint();
     if (!ts.ok) {
       $("t-rpm").textContent = "—"; $("t-feed").textContent = "—"; $("t-rpm-s").textContent = ts.blocked ? "blocked · see note below" : "see note below"; $("t-feed-s").textContent = "";
       $("t-code").textContent = "—";
@@ -396,6 +400,13 @@
     if (ts.sources && ts.sources.length && !ts.override) lines.push({ html: "<b>Sources:</b> " + esc(ts.sources.join(" · ")) });
     infoLines($("t-info"), lines);
   }
+
+  function tapHint() {
+    const h = $("tap-ov-hint");
+    if (S.tapOwn) h.innerHTML = 'yours · <button type="button" class="linkbtn" id="tap-ov-reset">use calculated</button>';
+    else h.textContent = "calculated · type to change";
+  }
+  function tapOwnInput() { S.tapOwn = num($("tap-ov")) > 0; renderTap(); }
 
   function renderDrill() {
     if (S.dLinked && lastRec) S.dDiaIn = lastRec.dIn;
@@ -453,7 +464,7 @@
   function renderUnits() {
     const mm = S.units === "mm";
     segSet(mm ? $("u-mm") : $("u-in"), [mm ? $("u-in") : $("u-mm")]);
-    $("tap-ov-lbl").textContent = mm ? "Own m/min" : "Own SFM";
+    $("tap-ov-lbl").textContent = mm ? "Tap m/min" : "Tap SFM";
     $("d-dia-lbl").textContent = "Drill Ø (" + S.units + ")";
     $("d-depth-lbl").textContent = "Hole depth (" + S.units + ")";
     $("cv1-lbl").textContent = mm ? "m/min ↔ RPM" : "SFM ↔ RPM";
@@ -509,6 +520,7 @@
   function setUnits(u) {
     if (u === S.units) return;
     S.units = u; store.set(LS.units, u);
+    if (S.tapOwn) { const v = num($("tap-ov")); if (v > 0) $("tap-ov").value = Math.round(u === "mm" ? v / D.M_TO_SFM : v * D.M_TO_SFM); }
     renderUnits(); cvFlipUnits(u === "mm"); renderAll();
   }
 
@@ -536,7 +548,8 @@
     $("pct").oninput = renderAll;
     $("mat").onchange = () => { setHardFromHB(C.material($("mat").value).defaultHB); $("hard-note").textContent = hardNote(); renderAll(); };
     $("hard").oninput = () => { $("hard-note").textContent = hardNote(); renderAll(); };
-    $("tapmat").onchange = renderTap; $("tap-ov").oninput = renderTap;
+    $("tapmat").onchange = renderTap; $("tap-ov").oninput = tapOwnInput; $("tap-ov").onblur = renderTap;
+    $("tap-ov-hint").onclick = (e) => { if (!e.target.closest("#tap-ov-reset")) return; e.preventDefault(); S.tapOwn = false; renderTap(); };
     $("drillmat").onchange = renderDrill;
     $("d-link").onchange = () => { S.dLinked = $("d-link").checked; renderDrill(); };
     $("d-dia").oninput = () => {
