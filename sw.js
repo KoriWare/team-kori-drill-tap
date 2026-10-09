@@ -1,7 +1,7 @@
 // Drill & Tap offline cache. Bump VERSION on every release.
-const VERSION = "dt-tc7";
-const FILES = ["./", "index.html", "styles.css?v=tc7", "data.js?v=tc7", "calc.js?v=tc7", "app.js?v=tc7", "troubledata.js?v=tc7", "troubleshoot.js?v=tc7", "insert.js?v=tc7",
-  "manifest.webmanifest?v=tc7", "icon.svg?v=tc7", "icon-192.png?v=tc7", "icon-512.png?v=tc7", "icon-maskable-512.png?v=tc7", "apple-touch-icon.png?v=tc7", "cat-mark.svg?v=tc7"];
+const VERSION = "dt-tc8";
+const FILES = ["./", "index.html", "styles.css?v=tc8", "data.js?v=tc8", "calc.js?v=tc8", "app.js?v=tc8", "troubledata.js?v=tc8", "troubleshoot.js?v=tc8", "insert.js?v=tc8",
+  "manifest.webmanifest?v=tc8", "icon.svg?v=tc8", "icon-192.png?v=tc8", "icon-512.png?v=tc8", "icon-maskable-512.png?v=tc8", "apple-touch-icon.png?v=tc8", "cat-mark.svg?v=tc8"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
