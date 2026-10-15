@@ -26,3 +26,7 @@ Pipe filter; Recent (last 4, localStorage) + Most used pinned. Keyboard: arrows,
 ## Cross-section
 Teal = thread form, copper = drill wall / taper pitch line, gold = L1 gauge plane (label centred in the bore,
 off the teeth). Taper tooth count follows real threads across L2. Cache-bust tag: `?v=mf1`.
+
+## License
+
+Copyright (c) 2026 KoriWare. All rights reserved. No reuse is permitted; see [LICENSE](LICENSE).
